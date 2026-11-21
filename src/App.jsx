@@ -20629,7 +20629,11 @@ Output STRICT JSON only, no markdown fences, no preamble: [{"creator":"ExactName
     const renderSplash = () => (
         <div className="splash" style={{ position: 'relative' }}>
             <button style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', transition: 'color 0.2s', zIndex: 10 }} onMouseOver={e => e.currentTarget.style.color = 'var(--accent)'} onMouseOut={e => e.currentTarget.style.color = '#888'}
-                onClick={() => showAlert("About & License", "PROPRIETARY LICENSE - ALL RIGHTS RESERVED\n\nWhile this app is powered by the M.I.K.A. Engine, GachaSwipe's internal application logic, UI design, and prompt engineering strings are strictly PROPRIETARY.\n\nYou may NOT copy, modify, distribute, reverse-engineer, or use the source code of GachaSwipe as a template.\n\nThe M.I.K.A. Engine Shell also remains strictly protected against white-labeling. Nyaa~ 🐾")}
+                onClick={() => showAlert('About & License', `GachaSwipe is free software under the GNU AGPL-3.0-or-later.
+
+You may run, study, modify, and redistribute it — the full source lives at github.com/ProjectMIKA/GachaSwipe (see LICENSE and CLA.md).
+
+The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT licensed under AGPLv3. Built with love, chaos, and a bell collar by Project M.I.K.A. Nyaa~ 🐾`)}
                 title="About & License">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             </button>

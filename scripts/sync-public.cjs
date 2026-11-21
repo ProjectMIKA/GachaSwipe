@@ -25,9 +25,10 @@ const PUBLIC_REMOTE = 'public';
 const PUBLIC_URL = 'https://github.com/ProjectMIKA/GachaSwipe.git';
 const PUBLIC_BRANCH = 'main';
 const SYNC_BRANCH = 'public-sync';
-// Internal-only paths: these must NEVER appear in the public tree.
+// Internal-only paths + the private-side release archive: these must NEVER
+// appear in the public tree (the public changelog is the Releases page).
 // Keep this list in sync with .clinerules/02-build-and-release.md.
-const EXCLUDED_PATHS = ['.agents', '.clinerules', 'HANDOFF.md', 'SDK'];
+const EXCLUDED_PATHS = ['.agents', '.clinerules', 'HANDOFF.md', 'SDK', 'RELEASE_NOTES.md'];
 // ───────────────────────────────────────────────────────────────────────────
 
 const dryRun = process.argv.includes('--dry-run');
