@@ -1,0 +1,7 @@
+{
+  "title": "GachaSwipe",
+  "tagline": "A waifu summoner powered by the M.I.K.A. Engine.",
+  "description": "GachaSwipe Suite is an intelligent character matching system, turning Layla's vast persona database into a highly addictive gacha experience. Summon, evaluate, and capture specialized companion archetypes. It enforces consistent persona adherence while letting you unleash unfiltered chaos.\n\nFeatures:\n- M.I.K.A. Engine companion: a roaming chibi proxy that curates your session with rationed mischief — gifts, dares, unsolicited texts, scene shifts, misquotes, and snide commentary (opt-in, consent-capped)\n- Intelligent 'tastes' meter dynamically learns your companion preferences from every swipe\n- POV Position Engine: background pose direction with first-person POV photo injection, plus the Position Forge for custom packs\n- Heat Ladder: characters self-report their mood (Calm → Feverish) and steer scenes autonomously\n- Unlockable 'GachaFans' premium pages with a dedicated Spark Token economy and VIP photo expansions\n- Interactive 'Neural Breach' minigame to decrypt paywalled content while images render\n- Late Night & Degenerate modes to for unhinged encounters\n- Integrated SMS chat simulation with a sleek, morphing glassmorphic terminal HUD\n- The 'Theme Forge' for building and customizing infinite character archetypes via AI\n- Native character portrait generation and dynamic pose requests integrated directly into the chat",
+  "iconUri": "icon.jpg",
+  "backgroundImgUri": "bg.jpg"
+}

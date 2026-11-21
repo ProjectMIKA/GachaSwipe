@@ -1,0 +1,21 @@
+node_modules/
+dist/
+scratch/
+builds/
+archive/
+
+.env
+.DS_Store
+.continue/
+
+# ✨ Artifacts live in builds/ and archive/ — never in git. ✨
+# Releases are published to GitHub Releases by the `release` skill.
+*.zip
+build_log.txt
+Layla-Agents/
+
+# ✨ Internal-only session doctrine — never enters git. The public mirror
+# (scripts/sync-public.cjs) excludes it as a second line of defense.
+HANDOFF.md
+
+

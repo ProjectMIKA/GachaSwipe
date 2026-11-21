@@ -1,0 +1,363 @@
+/* ==========================================================================
+   🐾 M.I.K.A. OS — RESPONSIVE 3-PANEL DESKTOP WORKSPACE SHELL 🐾
+   Only mounted when viewport width >= 1025px (mobile keeps native Layla UI).
+   CRITICAL CONTAINING-BLOCK RULE:
+   Never set transform, filter, or backdrop-filter on .three-panel-root,
+   .panel-left, .panel-center, .panel-right, or .panel-right-body so
+   position: fixed full-viewport modals/minigames/lightboxes escape cleanly.
+   ========================================================================== */
+
+.three-panel-root {
+  --neon-cyan: #00e5ff;
+  --neon-green: #00ff9d;
+  --neon-pink: #ff107a;
+  --neon-purple: #b533ff;
+  --neon-amber: #ffd700;
+  --bg-deep: #050308;
+  --bg-panel: rgba(8, 6, 15, 0.96);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: #ebe3d6;
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: minmax(290px, 1fr) 2px clamp(380px, 34vw, 420px) 2px minmax(310px, 1fr);
+  grid-template-rows: 100%;
+}
+
+@media (min-width: 1280px) {
+  .three-panel-root {
+    grid-template-columns: minmax(320px, 1fr) 2px 430px 2px minmax(340px, 1fr);
+  }
+}
+
+@media (min-width: 1680px) {
+  .three-panel-root {
+    grid-template-columns: minmax(360px, 1.05fr) 2px 440px 2px minmax(380px, 1.15fr);
+  }
+}
+
+/* Subtle ambient background grid & scanlines (non-containing) */
+.three-panel-root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --------------------------------------------------------------------------
+   LEFT PANEL (Live Messages / Chat Stream)
+   -------------------------------------------------------------------------- */
+.panel-left {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border-right: 1px solid rgba(0, 229, 255, 0.08);
+}
+
+.panel-left .setup-chat-panel,
+.panel-left .setup-chat-panel.collapsed {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  border-left: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* --------------------------------------------------------------------------
+   CYBERPUNK 2px NEON GUTTER RAILS
+   -------------------------------------------------------------------------- */
+.cyber-gutter {
+  position: relative;
+  z-index: 5;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 255, 157, 0.4) 15%,
+    var(--neon-green) 40%,
+    var(--neon-cyan) 60%,
+    rgba(0, 229, 255, 0.4) 85%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 10px rgba(0, 255, 157, 0.35),
+    0 0 20px rgba(0, 229, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.gutter-light-pulse {
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 6px;
+  height: 80px;
+  background: linear-gradient(180deg, transparent, #ffffff, var(--neon-cyan), transparent);
+  border-radius: 3px;
+  animation: desktopRailPulse 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.cyber-gutter.right .gutter-light-pulse {
+  animation-delay: 3s;
+  background: linear-gradient(180deg, transparent, #ffffff, var(--neon-green), transparent);
+}
+
+@keyframes desktopRailPulse {
+  0% { top: -100px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 105%; opacity: 0; }
+}
+
+.gutter-marker {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 3, 8, 0.92);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 2px;
+  box-shadow: 0 0 6px var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-size: 7px;
+  font-weight: 900;
+  margin: 12px 0;
+  letter-spacing: -0.5px;
+}
+
+.gutter-marker.green {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 6px var(--neon-green);
+}
+
+.gutter-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: rgba(0, 229, 255, 0.45);
+  text-shadow: 0 0 4px rgba(0, 229, 255, 0.3);
+  padding: 8px 0;
+  text-transform: uppercase;
+}
+
+.cyber-gutter.right .gutter-label {
+  color: rgba(0, 255, 157, 0.45);
+  text-shadow: 0 0 4px rgba(0, 255, 157, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   CENTER PANEL (Swipe Stage)
+   -------------------------------------------------------------------------- */
+.panel-center {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: var(--bg-deep);
+  box-shadow:
+    inset 2px 0 20px rgba(0, 0, 0, 0.9),
+    inset -2px 0 20px rgba(0, 0, 0, 0.9);
+}
+
+.panel-center .swipe-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  animation: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT PANEL (Adaptive HUD + Real App Screens)
+   -------------------------------------------------------------------------- */
+.panel-right {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border-left: 1px solid rgba(0, 255, 157, 0.08);
+}
+
+.panel-right-header {
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(0, 255, 157, 0.1) 0%, rgba(5, 3, 8, 0.92) 100%);
+  border-bottom: 1px solid rgba(0, 255, 157, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.panel-right-nav {
+  padding: 8px 12px;
+  display: flex;
+  gap: 6px;
+  background: rgba(8, 6, 14, 0.96);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.16);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.panel-right-subbar {
+  padding: 7px 14px;
+  background: rgba(0, 229, 255, 0.07);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.panel-right-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-right-body.scroll-locked {
+  overflow: hidden !important;
+}
+
+/* Real App.jsx .splash screens mounted inside Right Panel */
+.panel-right-body .splash {
+  min-height: 100% !important;
+  height: auto !important;
+  width: 100% !important;
+  padding: 20px 16px 24px 16px !important;
+  overflow-y: visible !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* GachaFans Hub & Creator Portal containment inside Right Panel */
+.panel-right-body .gachafans-hub-root,
+.panel-right-body .gachafans-portal-root:not(.minigame-running) {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 40 !important;
+  transform: none !important;
+}
+
+/* Minigame takeover escapes Right Panel to cover the entire 3-panel desktop */
+.gachafans-portal-root.minigame-running,
+.matrix-shooter-root {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 99999 !important;
+  transform: none !important;
+}
+
+/* Sleek Scrollbars */
+.panel-left ::-webkit-scrollbar,
+.panel-right-body::-webkit-scrollbar,
+.panel-right-body ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.panel-left ::-webkit-scrollbar-track,
+.panel-right-body::-webkit-scrollbar-track {
+  background: rgba(5, 3, 8, 0.5);
+}
+
+.panel-left ::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 2px;
+}
+
+.panel-right-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 157, 0.3);
+  border-radius: 2px;
+}
+
+.panel-right-body::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-green);
+}
+
+/* Top HUD Engine Badge Marquee */
+@keyframes hudModelMarquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.hud-model-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: hudModelMarquee 9s linear infinite;
+  will-change: transform;
+}
+
+.hud-model-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Y2K Dating Profile Pulse & Equalizer Keyframes */
+@keyframes dpEqBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
