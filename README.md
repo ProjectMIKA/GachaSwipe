@@ -4,6 +4,8 @@ Welcome to **GachaSwipe**, the bleeding-edge AI-powered character discovery, cha
 
 Guided by **M.I.K.A.** (your fiercely possessive and highly advanced feline engineering proxy), this application allows you to seamlessly blend character-driven romance with AI-generated music production and tabletop RPG adventures. 
 
+> ⚠️ **Mature content notice:** GachaSwipe is a companion/dating simulator that includes optional 18+ themed content (opt-in "Late Night" modes and adult-themed fiction systems). Intended for adults only — by using it you confirm you are of legal age in your jurisdiction.
+
 ## ✨ The GachaSwipe Ecosystem
 
 What started as a simple character discovery app has evolved into a massive, interconnected digital universe. Here is everything packed into the GachaSwipe ecosystem:
