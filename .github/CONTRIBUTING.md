@@ -55,6 +55,15 @@ most UI work is testable without one.
 6. **Small, focused PRs** — one feature or fix per pull request, with a short
    description of what changed and why.
 
+## 🌌 The visual language (read this before any UI change)
+
+GachaSwipe's terminal/neon look is a deliberate design system, not a theme you
+can swap out. Generic "AI-generated dashboard" styling is the #1 reason UI PRs
+get rejected here. Read the
+**[Visual Language Style Guide](STYLE_GUIDE.md)** before touching
+`src/index.css` or any component styles — it defines the palette, the two
+dialects, the hard laws, and the motion/performance rules.
+
 ## 🎨 Code style
 
 4-space indent · single quotes · semicolons · trailing commas in multiline
