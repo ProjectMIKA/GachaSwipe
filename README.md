@@ -65,7 +65,7 @@ GachaSwipe's code is free software: it is released under the **GNU Affero Genera
 
 **💼 Commercial licensing:** the Layla-hosted app itself is and always will be free, open-source software — that will not change. What's reserved is everything *else*: if this codebase ever powers a hosted service (like a future **gachaswipe.com** web surface), an **app-store release**, or any closed product, that requires a commercial license from ProjectMIKA. Interested? Reach out via GitHub.
 
-*Contributions are accepted under the [Individual Contributor License Agreement](CLA.md) — see [why it exists](../blob/main/CLA.md#why-this-cla-exists-the-short-version).*
+*Contributions are accepted under the [Individual Contributor License Agreement](CLA.md) — see [why it exists](CLA.md#why-this-cla-exists-the-short-version).*
 
 ## 📜 Changelog
 
