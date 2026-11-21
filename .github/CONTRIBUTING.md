@@ -67,7 +67,7 @@ most UI work is testable without one.
 GachaSwipe's terminal/neon look is a deliberate design system, not a theme you
 can swap out. Generic "AI-generated dashboard" styling is the #1 reason UI PRs
 get rejected here. Read the
-**[Visual Language Style Guide](STYLE_GUIDE.md)** before touching
+**[Visual Language Style Guide](https://github.com/ProjectMIKA/GachaSwipe/blob/main/.github/STYLE_GUIDE.md)** before touching
 `src/index.css` or any component styles — it defines the palette, the two
 dialects, the hard laws, and the motion/performance rules.
 
