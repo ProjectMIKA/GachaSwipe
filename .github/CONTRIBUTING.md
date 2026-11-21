@@ -35,6 +35,15 @@ Network host and talks to it through `@layla-network/sdk`. In a plain browser
 feature-detected — it stays on its legacy/fallback path outside the host, so
 most UI work is testable without one.
 
+## 🎯 Finding work
+
+Planned work and parked ideas live on the pinned
+**[Backburner](https://github.com/ProjectMIKA/GachaSwipe/issues/7)** issue —
+approved items graduate into labeled, claimable issues. Or browse the
+[good first issues](https://github.com/ProjectMIKA/GachaSwipe/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+Got a new idea? Use the
+[feature-idea template](https://github.com/ProjectMIKA/GachaSwipe/issues/new?template=feature_request.md).
+
 ## 🗺️ Where things live
 
 | Path | What it is |

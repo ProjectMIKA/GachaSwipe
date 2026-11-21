@@ -51,7 +51,7 @@ The codebase lives in `src/App.jsx` (the central hub), `src/components/`, `src/m
 
 ## 🤝 Contributing
 
-Pull requests are welcome! See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the workflow and ground rules — first-time contributors sign the one-click [CLA](CLA.md) via CLA Assistant. Good first hunting grounds: the pure engines in `src/utils/` with their zero-dependency `node --test` suites in `tests/`.
+Pull requests are welcome! See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the workflow and ground rules — first-time contributors sign the one-click [CLA](CLA.md) via CLA Assistant. Good first hunting grounds: the pure engines in `src/utils/` with their zero-dependency `node --test` suites in `tests/`. Planned work and parked ideas live on the pinned [Backburner](https://github.com/ProjectMIKA/GachaSwipe/issues/7) issue.
 
 ## ⚖️ License & Notice
 
