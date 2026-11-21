@@ -5,6 +5,10 @@
 
 Thank you for contributing! This agreement ("CLA") governs every contribution ("Contribution") you submit to the Project — code, documentation, translations, assets — via pull request, patch, or any other channel. You sign it once (via CLA Assistant on your first pull request); it then covers all your future Contributions to this Project.
 
+## Why this CLA exists (the short version)
+
+GachaSwipe for the Layla Network is and always will be **free, open-source software** — that is the project's standing intent, and this agreement will not be used to change it. What this agreement keeps open are every *other* door: if this codebase ever powers additional surfaces — such as the **gachaswipe.com** web app, an **app-store release**, or other commercial editions — the Maintainer needs a clean, unified chain of rights to build them. Signing keeps your contributions welcome in the free app while making sure the project never hits a legal dead-end if it grows beyond it.
+
 ## 1. Ownership
 
 You retain copyright and full credit for your Contributions. Nothing here transfers ownership of your work to the Maintainer.

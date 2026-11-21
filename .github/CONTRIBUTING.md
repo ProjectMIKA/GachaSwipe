@@ -12,6 +12,13 @@ click. **CLA Assistant** will automatically comment on your first pull
 request with a signing link; merges stay blocked until it is signed. You
 keep full ownership and credit for your code.
 
+**Why a CLA?** The Layla app is and stays free — forever. The CLA simply
+keeps the project's rights unified so that if this code ever powers other
+surfaces (the gachaswipe.com web app, an app-store release), ProjectMIKA
+can license those cleanly. Your contribution keeps working in the free app
+either way — see [Why this CLA exists](../blob/main/CLA.md#why-this-cla-exists-the-short-version)
+in the agreement itself.
+
 ## 🛠️ Getting started
 
 ```bash

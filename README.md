@@ -63,6 +63,10 @@ GachaSwipe's code is free software: it is released under the **GNU Affero Genera
 - **The Layla Network host, its brand, and `@layla-network/sdk`** are separate third-party components this app integrates with. They are not part of this repository, are not licensed under AGPLv3, and remain the property of **their respective owners** — their own terms govern their use.
 - **Selling the code:** AGPL-3.0-or-later permits redistribution (including selling) of the *code* — but only under the same license, with complete source, and never as closed source. **Closed-source and commercial licensing of GachaSwipe are reserved to ProjectMIKA**; contributors grant those rights via the [Individual Contributor License Agreement](CLA.md).
 
+**💼 Commercial licensing:** the Layla-hosted app itself is and always will be free, open-source software — that will not change. What's reserved is everything *else*: if this codebase ever powers a hosted service (like a future **gachaswipe.com** web surface), an **app-store release**, or any closed product, that requires a commercial license from ProjectMIKA. Interested? Reach out via GitHub.
+
+*Contributions are accepted under the [Individual Contributor License Agreement](CLA.md) — see [why it exists](../blob/main/CLA.md#why-this-cla-exists-the-short-version).*
+
 ## 📜 Changelog
 
 Every release and its full release notes live on the [GitHub Releases page](https://github.com/ProjectMIKA/GachaSwipe/releases).
