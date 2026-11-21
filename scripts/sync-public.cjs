@@ -98,10 +98,11 @@ try {
     }
 
     // 7) Commit the tree (orphan root on genesis, linear parent afterwards).
-    //    GS_SYNC_AUTHOR_EMAIL: the public repo publishes author emails — use
-    //    Master's GitHub noreply address there, never a personal inbox.
-    const authorName = process.env.GS_SYNC_AUTHOR_NAME || gitOk(['config', 'user.name']) || 'ProjectMIKA';
-    const authorEmail = process.env.GS_SYNC_AUTHOR_EMAIL || gitOk(['config', 'user.email']) || 'ProjectMIKA@users.noreply.github.com';
+    //    Public commits publish author emails, so the author is ALWAYS
+    //    Master's GitHub noreply address — a local git identity (personal
+    //    inbox) must never leak onto the public mirror. Override via env.
+    const authorName = process.env.GS_SYNC_AUTHOR_NAME || 'ProjectMIKA';
+    const authorEmail = process.env.GS_SYNC_AUTHOR_EMAIL || '268793390+ProjectMIKA@users.noreply.github.com';
     const authorEnv = {
         GIT_AUTHOR_NAME: authorName,
         GIT_AUTHOR_EMAIL: authorEmail,
