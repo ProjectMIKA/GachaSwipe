@@ -5,10 +5,12 @@
 // library, .clinerules, and the session HANDOFF). This script maintains a
 // LINEAR `public-sync` branch whose tree is exactly `main` MINUS the
 // internal-only paths below, then pushes it to the public GitHub remote.
-// Fail-closed everywhere: it aborts on remote mismatch, on divergence
-// between the public repo and the local sync head, and on ANY internal path
-// surviving the filter. It never touches the working tree — it syncs the
-// committed state of main through a throwaway index.
+// Fail-closed everywhere: it aborts on remote mismatch and on ANY internal
+// path surviving the filter. It never touches the working tree — it syncs the
+// committed state of main through a throwaway index. Flow B (community PRs):
+// PRs merge on the PUBLIC repo, so the sync chain always parents on the
+// ACTUAL public main head (fetched here), and skips entirely when the
+// filtered private tree already equals it.
 //
 // Usage:
 //   node scripts/sync-public.cjs [--dry-run] [--message "commit subject"]
@@ -63,16 +65,19 @@ const mainSha = git(['rev-parse', 'main']);
 const mainShort = git(['rev-parse', '--short', 'main']);
 const mainSubject = git(['log', '-1', '--format=%s', 'main']);
 
-// 3) Previous public-sync head (null = genesis run).
-const prev = gitOk(['rev-parse', '-q', '--verify', `refs/heads/${SYNC_BRANCH}`]);
-
-// 4) Divergence guard: the public repo's main must be exactly our last sync.
+// 3) The public head rules the sync chain: PRs may have merged on GitHub
+//    (Flow B), so each sync commit parents on the ACTUAL public main head —
+//    fetched here so its objects exist locally.
 const lsRemote = gitOk(['ls-remote', PUBLIC_REMOTE, `refs/heads/${PUBLIC_BRANCH}`]);
 const remoteSha = lsRemote ? lsRemote.split(/\s+/)[0] : null;
-if (remoteSha && remoteSha !== prev) {
-    console.error('[SYNC] ✗ Public main diverged from the local public-sync head. Someone pushed to the public repo directly — resolve by hand, never guess.');
-    process.exit(1);
+if (remoteSha) {
+    git(['fetch', '--quiet', PUBLIC_REMOTE, PUBLIC_BRANCH]);
+    if (!gitOk(['rev-parse', '--verify', `${remoteSha}^{commit}`])) {
+        console.error('[SYNC] ✗ Public head commit unreachable locally after fetch — aborting.');
+        process.exit(1);
+    }
 }
+const prev = gitOk(['rev-parse', '-q', '--verify', `refs/heads/${SYNC_BRANCH}`]);
 if (remoteSha === null && prev !== null) {
     console.error('[SYNC] ✗ Public repo has no main but local public-sync exists (repo recreated?). Reset public-sync by hand first.');
     process.exit(1);
@@ -98,6 +103,18 @@ try {
         process.exit(1);
     }
 
+    // 6.5) Already in sync? If the filtered private tree equals the public
+    //      head's tree (a PR merged on GitHub brought identical content, or
+    //      private main hasn't moved), there is nothing to commit or push.
+    if (remoteSha) {
+        const publicTree = gitOk(['rev-parse', `${remoteSha}^{tree}`]);
+        if (publicTree === tree) {
+            if (prev !== remoteSha) git(['update-ref', `refs/heads/${SYNC_BRANCH}`, remoteSha]);
+            console.log(`[SYNC] ✓ Already in sync — public tree matches the filtered private tree (${remoteSha.slice(0, 12)}).`);
+            process.exit(0);
+        }
+    }
+
     // 7) Commit the tree (orphan root on genesis, linear parent afterwards).
     //    Public commits publish author emails, so the author is ALWAYS
     //    Master's GitHub noreply address — a local git identity (personal
@@ -113,10 +130,10 @@ try {
     const subject = msgOverride || `sync: ${mainShort} ${mainSubject}`;
     const body = `Auto-synced from the private repository at ${mainSha}.\n\nInternal-only paths excluded: ${EXCLUDED_PATHS.join(', ')}.\n`;
     const commitArgs = ['commit-tree', tree, '-m', subject, '-m', body];
-    if (prev) commitArgs.push('-p', prev);
+    if (remoteSha) commitArgs.push('-p', remoteSha);
     const commit = git(commitArgs, authorEnv);
 
-    const kind = prev ? 'sync' : 'genesis';
+    const kind = remoteSha ? 'sync' : 'genesis';
     console.log(`[SYNC] ${kind}: ${commit} (tree ${tree.slice(0, 12)}, ${files.length} files, from ${mainShort} "${mainSubject}")`);
 
     if (dryRun) {
