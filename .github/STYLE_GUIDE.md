@@ -89,6 +89,15 @@ Radius scale: **4px** for terminal chrome, **12–24px** pills for the romance d
 - ALL-CAPS, monospace, letter-spaced. Emoji are used as *functional* glyphs (📌 ✏️ ↻ ⚙️), not decoration.
 - Don't rewrite terminal copy into friendly SaaS sentences — the machine speaks like a machine.
 
+### Iconography
+
+Icons are **custom inline SVG**, not a library. The model: `src/components/Icons.jsx`.
+
+- `viewBox="0 0 24 24"` with an optional `size` prop. Stroke glyphs: `stroke="currentColor"`, `strokeWidth 2–3`, round caps/joins. Solid glyphs: `fill="currentColor"`.
+- Icons inherit color from their parent via `currentColor` — they never hardcode hex; the surrounding lane/glow recipe owns color.
+- No icon npm packages or icon fonts (the zero-new-deps law covers this too). Emoji in terminal labels are functional glyphs, not a substitute for real icons in new work.
+- Some older surfaces still carry stock icons from past updates — grandfathered, a sweep is planned. New code ships inline SVG.
+
 ### Motion (a performance scar, not a style choice)
 
 GachaSwipe runs inside Android/iOS WebViews next to an on-device LLM. The rules:
@@ -139,6 +148,7 @@ GachaSwipe runs inside Android/iOS WebViews next to an on-device LLM. The rules:
 - [ ] No pure `#fff` chat text · no un-glowed neon chrome
 - [ ] Animations are transform/opacity, freezable, `pointerEvents: 'none'` if decorative
 - [ ] Microcopy keeps the terminal voice (`> LABELS`, `[ BRACKETS ]`)
+- [ ] Icons are inline SVG (`currentColor`, 24px viewBox) — no icon libraries, no emoji-as-icons in new work
 - [ ] Canonical screens untouched — or an issue discussed the redesign first
 - [ ] `npm run lint` 0 errors · `npm test` green
 
