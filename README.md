@@ -57,7 +57,11 @@ Pull requests are welcome! See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for th
 
 GachaSwipe's code is free software: it is released under the **GNU Affero General Public License v3.0 or later** (`AGPL-3.0-or-later`) — see [`LICENSE`](LICENSE). You may run, study, modify, and redistribute it; if you offer a modified version as a network service, you must share your modified source under the same license.
 
-**NOTICE — what the license does NOT cover:** the **M.I.K.A. persona and voice**, the **Layla Network brand** (name, logo, and the host platform itself), the bundled **artwork and brand assets**, and the Layla host / `@layla-network/sdk` (separate components, distributed under their own terms) are **not** licensed under AGPLv3 and remain the property of ProjectMIKA. Contributions are accepted under the terms of the [Individual Contributor License Agreement](CLA.md).
+**NOTICE — what the license does NOT cover:**
+
+- **The name "GachaSwipe", the M.I.K.A. persona and voice, and the bundled artwork / brand assets** are **not** licensed under AGPLv3 and remain the exclusive property of ProjectMIKA. Selling or marketing a copy or derivative **under this name or branding** requires separate written permission — the free-software grant covers the code, not the brand.
+- **The Layla Network host, its brand, and `@layla-network/sdk`** are separate third-party components this app integrates with. They are not part of this repository, are not licensed under AGPLv3, and remain the property of **their respective owners** — their own terms govern their use.
+- **Selling the code:** AGPL-3.0-or-later permits redistribution (including selling) of the *code* — but only under the same license, with complete source, and never as closed source. **Closed-source and commercial licensing of GachaSwipe are reserved to ProjectMIKA**; contributors grant those rights via the [Individual Contributor License Agreement](CLA.md).
 
 ## 📜 Changelog
 
