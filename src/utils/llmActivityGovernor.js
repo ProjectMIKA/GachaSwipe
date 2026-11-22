@@ -10,9 +10,15 @@ import { isPerchanceModelSelected, generateImageViaPerchance } from './perchance
 import { convertPromptToFluxProse, PROMPTING_STYLES, isOobProsePromptingStyle } from './fluxPromptConverter.js';
 
 let imagePromptingResolver = null;
+let completionPresetMiddleware = null;
 
 export function setImagePromptingResolver(fn) {
     imagePromptingResolver = typeof fn === 'function' ? fn : null;
+}
+
+export function setCompletionPresetMiddleware(middleware) {
+    completionPresetMiddleware =
+        middleware && typeof middleware.beforeRequest === 'function' ? middleware : null;
 }
 
 const UNFREEZE_DEBOUNCE_MS = 2000; // resume window after the final LLM op ends
@@ -389,12 +395,22 @@ export function wrapLaylaSdkWithActivityGovernor(sdk) {
             if (typeof completions.stream === 'function') {
                 const origStream = completions.stream;
                 completions.stream = function (...args) {
+                    let mwCtx = null;
+                    let callArgs = args;
+                    if (completionPresetMiddleware && args.length > 0 && args[0] && typeof args[0] === 'object') {
+                        try {
+                            mwCtx = completionPresetMiddleware.beforeRequest(args[0]);
+                            if (mwCtx && mwCtx.req) {
+                                callArgs = [mwCtx.req, ...args.slice(1)];
+                            }
+                        } catch { /* preserve original request on middleware error */ }
+                    }
                     const id = beginLlmActivity('chat.stream');
                     let ended = false;
                     const finish = () => { if (!ended) { ended = true; lastLlmEndAt = Date.now(); endLlmActivity(id); } };
                     let stream;
                     try {
-                        stream = origStream.apply(this, args);
+                        stream = origStream.apply(this, callArgs);
                     } catch (e) {
                         finish();
                         throw e;
@@ -403,7 +419,21 @@ export function wrapLaylaSdkWithActivityGovernor(sdk) {
                     if (typeof stream.finalContent === 'function') {
                         const origFinalContent = stream.finalContent.bind(stream);
                         stream.finalContent = async function (...fa) {
-                            try { return await origFinalContent(...fa); }
+                            try {
+                                const raw = await origFinalContent(...fa);
+                                if (
+                                    typeof raw === 'string' &&
+                                    completionPresetMiddleware &&
+                                    typeof completionPresetMiddleware.transformOutput === 'function' &&
+                                    mwCtx &&
+                                    mwCtx.injected
+                                ) {
+                                    try {
+                                        return completionPresetMiddleware.transformOutput(raw, mwCtx);
+                                    } catch { return raw; }
+                                }
+                                return raw;
+                            }
                             finally { finish(); }
                         };
                     }
@@ -432,8 +462,38 @@ export function wrapLaylaSdkWithActivityGovernor(sdk) {
             if (typeof completions.create === 'function') {
                 const origCreate = completions.create;
                 completions.create = async function (...args) {
+                    let mwCtx = null;
+                    let callArgs = args;
+                    if (completionPresetMiddleware && args.length > 0 && args[0] && typeof args[0] === 'object') {
+                        try {
+                            mwCtx = completionPresetMiddleware.beforeRequest(args[0]);
+                            if (mwCtx && mwCtx.req) {
+                                callArgs = [mwCtx.req, ...args.slice(1)];
+                            }
+                        } catch { /* preserve original request on middleware error */ }
+                    }
                     const id = beginLlmActivity('chat.create');
-                    try { return await origCreate.apply(this, args); }
+                    try {
+                        const result = await origCreate.apply(this, callArgs);
+                        if (
+                            completionPresetMiddleware &&
+                            typeof completionPresetMiddleware.transformOutput === 'function' &&
+                            mwCtx &&
+                            mwCtx.injected &&
+                            result &&
+                            Array.isArray(result.choices) &&
+                            result.choices[0]?.message &&
+                            typeof result.choices[0].message.content === 'string'
+                        ) {
+                            try {
+                                result.choices[0].message.content = completionPresetMiddleware.transformOutput(
+                                    result.choices[0].message.content,
+                                    mwCtx
+                                );
+                            } catch { /* ignore transform error */ }
+                        }
+                        return result;
+                    }
                     finally { lastLlmEndAt = Date.now(); endLlmActivity(id); }
                 };
             }

@@ -32,7 +32,8 @@ import { SCHEMAS } from './db/schema.js';
 import { checkDatabaseHealth, repairDatabaseQuick, salvageAndRebuildDatabase } from './db/dbRecovery.js';
 import { withRetry } from './utils/bootRetry.js';
 import { recordLlmTelemetry, recordUserCadence, getActiveCadenceConfig, purgeCadenceTelemetry, getModelCadenceProfile, getPrefillEstimate, estimateCacheHit, calculateGroupTurnCadence, getEffectiveNeuralLinkTier, getKnownLocalEngine, getGovernorTier, flushTelemetryStore } from './utils/neuralCadenceEngine.js';
-import { wrapLaylaSdkWithActivityGovernor, configureActivityGovernor, resetActivityGovernor, isLlmStreamFrozen, hasImageGenSinceLastLlmTurn, beginThoughtFreeze, endThoughtFreeze, beginMenuFreeze, endMenuFreeze, beginProfileFreeze, endProfileFreeze, setImagePromptingResolver } from './utils/llmActivityGovernor.js';
+import { wrapLaylaSdkWithActivityGovernor, configureActivityGovernor, resetActivityGovernor, isLlmStreamFrozen, hasImageGenSinceLastLlmTurn, beginThoughtFreeze, endThoughtFreeze, beginMenuFreeze, endMenuFreeze, beginProfileFreeze, endProfileFreeze, setImagePromptingResolver, setCompletionPresetMiddleware } from './utils/llmActivityGovernor.js';
+import { PresetCtrlUI, registerPresetSdkRef, ensurePresetStoreHydrated, setPresetHookEnabled, createPresetEngineMiddleware } from './modules/PresetCtrl/index.js';
 import { PROMPTING_STYLES, PROMPTING_STYLE_OPTIONS, DEFAULT_CUSTOM_OOB_PROMPT_INSTRUCTIONS, getPromptingStyleForModel, isOobProsePromptingStyle, composeHybridPerchancePrompt } from './utils/fluxPromptConverter.js';
 import { PERCHANCE_MODEL_ID, PERCHANCE_MODEL_OPTION, DEFAULT_PERCHANCE_SLUG, DEFAULT_PERCHANCE_CONFIG, VALID_PERCHANCE_RESOLUTIONS, PERCHANCE_STYLE_PRESETS, getPerchanceStylePreset, PERCHANCE_LISTS_TEMPLATE, PERCHANCE_HTML_TEMPLATE, normalizePerchanceConfig, normalizePerchanceSlug, resolvePerchanceEmbedUrl, resolvePerchancePageUrl, generateRandomRelayChannel, configurePerchanceBridge, subscribePerchanceBridgeStatus, getPerchanceBridgeStatus, setPerchanceMonitorVisible, pingPerchanceBridge, ensurePerchanceIframe, resolveRelayAuthorization } from './utils/perchanceBridge.js';
 import { initOobCapability, askOutOfBand, isOobSupported, OOB_ASKS, OOB_VALIDATORS, subscribeOobActivity, getOobTrace, holdOobLaneForMainTurn, releaseOobLaneForMainTurn } from './utils/oobChannel.js';
@@ -903,6 +904,7 @@ function App({ webPlatform = null }) {
     const [isIsekaiMirrorOpen, setIsIsekaiMirrorOpen] = useState(false);
     const [isDiveChamberOpen, setIsDiveChamberOpen] = useState(false);
     const [isChatCtrlOpen, setIsChatCtrlOpen] = useState(false); // ✨ MIKA'S CHAT_CTRL ARCHIVE TERMINAL ✨
+    const [isPresetCtrlOpen, setIsPresetCtrlOpen] = useState(false); // ✨ ROM-09: M.I.K.A._PRESET_ENGINE MODAL ✨
     const [sceneBootNonce, setSceneBootNonce] = useState(0); // ✨ SCENE BOOT VEIL: bumped on NEW_CHAT/RESTORE (thread swaps that keep the same chatId) ✨
     const [isSceneBooting, setIsSceneBooting] = useState(false);
     const [sceneBootLine, setSceneBootLine] = useState(''); // ✨ v2.5.60: the veil's random cheeky one-liner, picked per boot ✨
@@ -3693,6 +3695,122 @@ Output strictly inside these XML tags:
     const [customPresets, setCustomPresets] = useState({}); // ✨ MIKA'S CUSTOM PRESETS
     const [activePresetId, setActivePresetId] = useState('MIKA'); // ✨ MIKA'S ACTIVE PRESET
     const [activeSettingsTab, setActiveSettingsTab] = useState('MODULES'); // ✨ MIKA'S MODULAR SETTINGS NAVIGATION (v2.7.80: Defaults to ROM Cartridge Bay)
+    const settingsTabNavElRef = useRef(null);
+    const settingsTabDragMovedRef = useRef(false);
+    const settingsTabCleanupRef = useRef(null);
+    const pendingRomJumpRef = useRef(null);
+    const executeRomBayJump = useCallback((jumpSpec) => {
+        if (!jumpSpec) return false;
+        const navEl = settingsTabNavElRef.current || document.querySelector('.settings-tab-nav');
+        const tabBtn = navEl ? navEl.querySelector(`[data-settings-tab-id="${jumpSpec.targetTab}"]`) : null;
+        if (navEl && tabBtn) {
+            const targetLeft = tabBtn.offsetLeft - (navEl.clientWidth - tabBtn.offsetWidth) / 2;
+            navEl.scrollLeft = Math.max(0, targetLeft);
+        }
+        const anchorId = `rom-bay-anchor-${String(jumpSpec.code).toLowerCase()}`;
+        const anchorEl = document.getElementById(anchorId);
+        if (!anchorEl) return false;
+        const stickyOffset = (navEl ? navEl.offsetHeight : 54) + 12;
+
+        let scrollTarget = null;
+        let node = anchorEl.parentElement;
+        while (node && node !== document.body && node !== document.documentElement) {
+            const style = window.getComputedStyle(node);
+            const overflowY = style ? style.overflowY : '';
+            if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 2) {
+                scrollTarget = node;
+                break;
+            }
+            node = node.parentElement;
+        }
+
+        if (scrollTarget) {
+            const parentRect = scrollTarget.getBoundingClientRect();
+            const anchorRect = anchorEl.getBoundingClientRect();
+            const nextTop = scrollTarget.scrollTop + (anchorRect.top - parentRect.top) - stickyOffset;
+            scrollTarget.scrollTop = Math.max(0, nextTop);
+        } else {
+            const anchorRect = anchorEl.getBoundingClientRect();
+            const currentWinY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+            const pageTop = currentWinY + anchorRect.top - (stickyOffset + 56);
+            window.scrollTo({ top: Math.max(0, pageTop), behavior: 'auto' });
+        }
+
+        anchorEl.style.transition = 'box-shadow 0.25s ease';
+        anchorEl.style.boxShadow = `0 0 18px ${jumpSpec.color || '#FF107A'}99`;
+        window.setTimeout(() => {
+            const elNow = document.getElementById(anchorId);
+            if (elNow) elNow.style.boxShadow = 'none';
+        }, 950);
+        return true;
+    }, []);
+    useEffect(() => {
+        const spec = pendingRomJumpRef.current;
+        if (!spec || spec.targetTab !== activeSettingsTab) return undefined;
+        pendingRomJumpRef.current = null;
+        executeRomBayJump(spec);
+        const timerId = window.setTimeout(() => {
+            executeRomBayJump(spec);
+        }, 60);
+        return () => window.clearTimeout(timerId);
+    }, [activeSettingsTab, executeRomBayJump]);
+    const attachSettingsTabNav = useCallback((el) => {
+        if (settingsTabCleanupRef.current) {
+            settingsTabCleanupRef.current();
+            settingsTabCleanupRef.current = null;
+        }
+        settingsTabNavElRef.current = el || null;
+        if (!el) return;
+        let isDown = false;
+        let startX = 0;
+        let startScrollLeft = 0;
+        const onWheel = (e) => {
+            if (el.scrollWidth <= el.clientWidth) return;
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.deltaY !== 0) {
+                e.preventDefault();
+                el.scrollLeft += e.deltaY;
+            }
+        };
+        const onMouseMove = (e) => {
+            if (!isDown) return;
+            const dx = e.clientX - startX;
+            if (Math.abs(dx) > 5) {
+                settingsTabDragMovedRef.current = true;
+            }
+            if (settingsTabDragMovedRef.current) {
+                e.preventDefault();
+                el.scrollLeft = startScrollLeft - dx;
+            }
+        };
+        const onMouseUp = () => {
+            if (!isDown) return;
+            isDown = false;
+            el.style.cursor = '';
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            setTimeout(() => {
+                settingsTabDragMovedRef.current = false;
+            }, 0);
+        };
+        const onMouseDown = (e) => {
+            if (e.button !== 0 || el.scrollWidth <= el.clientWidth) return;
+            isDown = true;
+            settingsTabDragMovedRef.current = false;
+            startX = e.clientX;
+            startScrollLeft = el.scrollLeft;
+            el.style.cursor = 'grabbing';
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        el.addEventListener('mousedown', onMouseDown);
+        settingsTabCleanupRef.current = () => {
+            el.removeEventListener('wheel', onWheel);
+            el.removeEventListener('mousedown', onMouseDown);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+    }, []);
     const [slottedCartridges, setSlottedCartridges] = useState(() => {
         const defaults = {
             meow: true,
@@ -3702,7 +3820,8 @@ Output strictly inside these XML tags:
             daw: false,
             late_night: false,
             oob_glass: true,
-            arcade: true
+            arcade: true,
+            preset_engine: true
         };
         try {
             const raw = localStorage.getItem('gachaswipe_slotted_cartridges');
@@ -4550,9 +4669,19 @@ Output strictly inside these XML tags:
         // ✨ v2.6.23: the hub joins the menu camera — the Neural Tuner + PULSE_SEARCH
         // overlay now freeze the cinematic background (the rotating pool used to keep
         // compositing under the dialogs, reading as discovery-feed glitching).
-        if (isGroupAdminMenuOpen || isChatCtrlOpen || (isGachaFansHubActive && (isDiscoveryOptionsOpen || isPulseSearchOpen))) beginMenuFreeze();
+        if (isGroupAdminMenuOpen || isChatCtrlOpen || isPresetCtrlOpen || (isGachaFansHubActive && (isDiscoveryOptionsOpen || isPulseSearchOpen))) beginMenuFreeze();
         else endMenuFreeze();
-    }, [isGroupAdminMenuOpen, isChatCtrlOpen, isGachaFansHubActive, isDiscoveryOptionsOpen, isPulseSearchOpen]);
+    }, [isGroupAdminMenuOpen, isChatCtrlOpen, isPresetCtrlOpen, isGachaFansHubActive, isDiscoveryOptionsOpen, isPulseSearchOpen]);
+
+    // ✨ ROM-09: Bind M.I.K.A._PRESET_ENGINE middleware when ROM-09 is slotted
+    // without clobbering the user's persisted in-modal sdkHookEnabled switch on reload ✨
+    useEffect(() => {
+        const enabled = Boolean(slottedCartridges.preset_engine);
+        if (enabled) {
+            ensurePresetStoreHydrated().catch(() => {});
+        }
+        setCompletionPresetMiddleware(enabled ? createPresetEngineMiddleware() : null);
+    }, [slottedCartridges.preset_engine]);
 
     // ✨ MIKA'S SCENE BOOT VEIL ✨ — when the chat scene identity changes (switching chats from
     // the buddy list, NEW_CHAT, RESTORE), the chatBgPool swaps wholesale and every new pool
@@ -7203,7 +7332,8 @@ Output strictly inside these XML tags:
                         daw: false,
                         late_night: false,
                         oob_glass: true,
-                        arcade: true
+                        arcade: true,
+                        preset_engine: true
                     };
                     let loadedCarts;
                     if (data.slottedCartridges && typeof data.slottedCartridges === 'object') {
@@ -7219,7 +7349,8 @@ Output strictly inside these XML tags:
                             daw: data.enableBeatEngine !== undefined ? Boolean(data.enableBeatEngine) : Boolean(localCarts?.daw),
                             late_night: (data.explicitMode !== undefined || data.degenMode !== undefined) ? Boolean(Number(data.explicitMode) > 0 || data.degenMode) : Boolean(localCarts?.late_night),
                             oob_glass: data.enableOobMemory !== undefined ? Boolean(data.enableOobMemory || data.oobPhotoTags || data.enableOobDirector || data.enableSessionCompaction) : (localCarts?.oob_glass ?? true),
-                            arcade: localCarts?.arcade !== undefined ? Boolean(localCarts.arcade) : true
+                            arcade: localCarts?.arcade !== undefined ? Boolean(localCarts.arcade) : true,
+                            preset_engine: localCarts?.preset_engine !== undefined ? Boolean(localCarts.preset_engine) : true
                         };
                         loadedCarts = { ...baseDefaults, ...(localCarts && typeof localCarts === 'object' ? localCarts : {}), ...inferred };
                     }
@@ -7625,6 +7756,8 @@ Output strictly inside these XML tags:
 
                 // ✨ MIKA'S LLM ACTIVITY GOVERNOR: one choke point for every generation in the app ✨
                 wrapLaylaSdkWithActivityGovernor(sdk);
+                // ✨ ROM-09: Register SDK handle lazily (zero boot DB/file I/O while ROM-09 is ejected) ✨
+                registerPresetSdkRef(sdk);
 
                 // 🛑 MIKA'S LOCKDOWN: Do NOT setLayla(sdk) yet! 
                 const abortController = new AbortController();
@@ -21560,19 +21693,19 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
         const BUILT_IN_PRESETS = {
             'MIKA': {
                 explicitMode: 1, degenMode: true, proactiveOffline: true, proactiveIdle: false, proactiveFavoritesOnly: true, syncSpeed: 'gamified', msgThirst: 0.15, tokenPreset: 'balanced', chatContextLimit: 50, groupChatContextLimit: 40, chatProfileDetail: 'dynamic', groupProfileDetail: 'dynamic', enableMeowEngine: true, enableSelfieAutonomy: true, enableProactiveSelfies: true, chatStyleMode: 'sms', groupChatStyleMode: 'dynamic_sms', bannedTags: ['drooling', 'messy', 'tears', 'heart pupils', 'heavy breathing', 'original', 'ahegao', 'phone', 'smartphone'], enableAtmosphere: false, cinematicChatBg: true, autoQueue: false, silhouetteMode: false, autoUpdateLaylaCards: false, backgroundSpooling: true, groupChatFlow: 'dynamic', neuralLinkMode: 'auto', groupChatPause: false, enableTtsStandard: true, enableTtsGroup: false, enablePrefixCache: true,
-                slottedCartridges: { meow: true, obsession: true, mika_proxy: false, purr: true, daw: false, late_night: true, oob_glass: true, arcade: true }
+                slottedCartridges: { meow: true, obsession: true, mika_proxy: false, purr: true, daw: false, late_night: true, oob_glass: true, arcade: true, preset_engine: true }
             },
             'LOCAL_ECO': {
                 explicitMode: 0, degenMode: false, proactiveOffline: false, proactiveIdle: false, proactiveFavoritesOnly: true, syncSpeed: 'balanced', msgThirst: 0, tokenPreset: 'eco', chatContextLimit: 20, groupChatContextLimit: 20, chatProfileDetail: 'condensed', groupProfileDetail: 'condensed', enableMeowEngine: false, enableSelfieAutonomy: false, enableProactiveSelfies: false, chatStyleMode: 'sms', groupChatStyleMode: 'dynamic_sms', bannedTags: ['phone', 'smartphone'], enableAtmosphere: false, cinematicChatBg: true, autoQueue: false, silhouetteMode: true, autoUpdateLaylaCards: false, backgroundSpooling: true, groupChatFlow: 'dynamic', neuralLinkMode: 'local', groupChatPause: true, enableTtsStandard: false, enableTtsGroup: false, enablePrefixCache: true,
-                slottedCartridges: { meow: false, obsession: false, mika_proxy: false, purr: false, daw: false, late_night: false, oob_glass: true, arcade: false }
+                slottedCartridges: { meow: false, obsession: false, mika_proxy: false, purr: false, daw: false, late_night: false, oob_glass: true, arcade: false, preset_engine: false }
             },
             'IMMERSIVE': {
                 explicitMode: 2, degenMode: true, proactiveOffline: true, proactiveIdle: true, proactiveFavoritesOnly: true, syncSpeed: 'realistic', msgThirst: 0.4, tokenPreset: 'full', chatContextLimit: 100, groupChatContextLimit: 100, chatProfileDetail: 'full', groupProfileDetail: 'full', enableMeowEngine: true, enableSelfieAutonomy: true, enableProactiveSelfies: true, chatStyleMode: 'rp_short', groupChatStyleMode: 'dynamic_rp', bannedTags: ['phone', 'smartphone'], enableAtmosphere: true, cinematicChatBg: true, autoQueue: false, silhouetteMode: false, autoUpdateLaylaCards: true, backgroundSpooling: true, groupChatFlow: 'dynamic', neuralLinkMode: 'cloud', groupChatPause: false, enableTtsStandard: true, enableTtsGroup: true, enablePrefixCache: true,
-                slottedCartridges: { meow: true, obsession: true, mika_proxy: true, purr: true, daw: true, late_night: true, oob_glass: true, arcade: true }
+                slottedCartridges: { meow: true, obsession: true, mika_proxy: true, purr: true, daw: true, late_night: true, oob_glass: true, arcade: true, preset_engine: true }
             },
             'VANILLA': {
                 explicitMode: 0, degenMode: false, proactiveOffline: true, proactiveIdle: false, proactiveFavoritesOnly: true, syncSpeed: 'gamified', msgThirst: 0.15, tokenPreset: 'balanced', chatContextLimit: 50, groupChatContextLimit: 40, chatProfileDetail: 'dynamic', groupProfileDetail: 'dynamic', enableMeowEngine: true, enableSelfieAutonomy: true, enableProactiveSelfies: true, chatStyleMode: 'rp_short', groupChatStyleMode: 'dynamic_sms', bannedTags: ['phone', 'smartphone'], enableAtmosphere: false, cinematicChatBg: true, autoQueue: false, silhouetteMode: false, autoUpdateLaylaCards: false, backgroundSpooling: true, groupChatFlow: 'dynamic', neuralLinkMode: 'auto', groupChatPause: false, enableTtsStandard: true, enableTtsGroup: false, enablePrefixCache: true,
-                slottedCartridges: { meow: true, obsession: true, mika_proxy: false, purr: true, daw: false, late_night: false, oob_glass: true, arcade: true }
+                slottedCartridges: { meow: true, obsession: true, mika_proxy: false, purr: true, daw: false, late_night: false, oob_glass: true, arcade: true, preset_engine: true }
             }
         };
 
@@ -21954,6 +22087,37 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                     triggerCartridgeEvent({ id: 'arcade', code: 'ROM-08', title: 'ARCADE_EXPANSION_PAK', subtitle: 'P.A.W.S. Tactical RPG, Lucid Dive, GachaFans & Isekai Mirror', badge: 'MINI_APPS', color: '#FFD700' }, next ? 'insert' : 'eject');
                     if (typeof showToast === 'function') showToast(next ? '💾 Slotted [ROM-08: ARCADE_EXPANSION_PAK]' : '⏏️ Ejected [ROM-08: ARCADE_EXPANSION_PAK]');
                 }
+            },
+            {
+                id: 'preset_engine',
+                code: 'ROM-09',
+                title: 'PRESET ENGINE',
+                subtitle: 'RisuAI (.risup), CharX/RisuM (.charx/.risum) & SillyTavern (.json)',
+                desc: 'Full toggle, dropdown & multi-select preset/module engine with CBS macro evaluation, CharX lorebook keyword injection & regex scripts.',
+                targetTab: 'SYSTEM',
+                targetTabLabel: 'IMAGE & SYSTEM',
+                color: '#FF107A',
+                badge: 'PRESET ENGINE',
+                isSlotted: Boolean(slottedCartridges.preset_engine),
+                icon: (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="4" y1="7" x2="20" y2="7" />
+                        <line x1="4" y1="12" x2="20" y2="12" />
+                        <line x1="4" y1="17" x2="20" y2="17" />
+                        <circle cx="9" cy="7" r="2" fill="currentColor" />
+                        <circle cx="15" cy="12" r="2" fill="currentColor" />
+                        <circle cx="10" cy="17" r="2" fill="currentColor" />
+                    </svg>
+                ),
+                onToggle: () => {
+                    const next = !slottedCartridges.preset_engine;
+                    updateSlottedCartridges({ preset_engine: next });
+                    if (next) setPresetHookEnabled(true);
+                    triggerCartridgeEvent({ id: 'preset_engine', code: 'ROM-09', title: 'PRESET ENGINE', subtitle: 'RisuAI (.risup), CharX/RisuM (.charx/.risum) & SillyTavern (.json)', badge: 'PRESET ENGINE', color: '#FF107A' }, next ? 'insert' : 'eject');
+                    if (typeof showToast === 'function') {
+                        showToast(next ? t('rom09_toast_slotted', '💾 Slotted [ROM-09: PRESET ENGINE]') : t('rom09_toast_ejected', '⏏️ Ejected [ROM-09: PRESET ENGINE]'));
+                    }
+                }
             }
         ];
 
@@ -21969,25 +22133,29 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
         const slottedCount = CARTRIDGE_MANIFEST.filter(c => c.isSlotted).length;
 
         const renderCartridgeBayHeader = (romCode, title, color, onEject) => (
-            <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '6px 10px', marginBottom: '8px', marginTop: '18px',
-                background: `${color}12`, border: `1px solid ${color}55`,
-                borderLeft: `4px solid ${color}`, borderRadius: '4px',
-                fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace"
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 'bold', color, letterSpacing: '0.08em' }}>
-                    <span>💾 [{romCode}]</span>
-                    <span style={{ color: '#EBE3D6' }}>{title}</span>
+            <div
+                id={`rom-bay-anchor-${String(romCode).toLowerCase()}`}
+                style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px',
+                    padding: '6px 10px', marginBottom: '8px', marginTop: '18px',
+                    scrollMarginTop: '72px',
+                    background: `${color}12`, border: `1px solid ${color}55`,
+                    borderLeft: `4px solid ${color}`, borderRadius: '4px',
+                    fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace"
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 'bold', color, letterSpacing: '0.08em', minWidth: 0, flex: 1 }}>
+                    <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>💾 [{romCode}]</span>
+                    <span style={{ color: '#EBE3D6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{title}</span>
                 </div>
                 <button
                     type="button"
                     onClick={() => { playCartridgeSfx('eject'); onEject(); }}
                     style={{
                         background: 'rgba(255, 51, 51, 0.12)', border: '1px solid rgba(255, 51, 51, 0.45)',
-                        color: '#FF5555', fontSize: '9px', fontWeight: 'bold', padding: '2px 7px',
+                        color: '#FF5555', fontSize: '9px', fontWeight: 'bold', padding: '3px 8px',
                         borderRadius: '3px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
-                        letterSpacing: '0.06em'
+                        letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0
                     }}
                     title="Eject this ROM Cartridge and disable its systems"
                 >
@@ -21995,6 +22163,16 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                 </button>
             </div>
         );
+
+        const handleJumpToCartridgeBay = (cart) => {
+            const spec = { code: cart.code, targetTab: cart.targetTab, color: cart.color };
+            if (activeSettingsTab === cart.targetTab) {
+                executeRomBayJump(spec);
+            } else {
+                pendingRomJumpRef.current = spec;
+                setActiveSettingsTab(cart.targetTab);
+            }
+        };
 
         return (
             <div className="splash" style={{ justifyContent: 'flex-start', paddingTop: '60px', paddingBottom: '80px', background: '#050308' }}>
@@ -22163,6 +22341,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
 
                     {/* 🚀 M.I.K.A. MODULAR SETTINGS NAVIGATION TABS (v2.7.80 DYNAMIC ROM RACK) 🚀 */}
                     <div
+                        ref={attachSettingsTabNav}
                         className="settings-tab-nav"
                         style={{
                             position: 'sticky',
@@ -22175,8 +22354,6 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                             display: 'flex',
                             gap: '8px',
                             overflowX: 'auto',
-                            scrollbarWidth: 'none',
-                            msOverflowStyle: 'none',
                             WebkitOverflowScrolling: 'touch',
                             width: '100%'
                         }}
@@ -22184,7 +22361,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                         {[
                             {
                                 id: 'MODULES',
-                                label: `MODULES (${slottedCount}/8)`,
+                                label: `MODULES (${slottedCount}/${CARTRIDGE_MANIFEST.length})`,
                                 color: '#00FF41',
                                 icon: (
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -22265,8 +22442,18 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                             return (
                                 <button
                                     key={tab.id}
+                                    data-settings-tab-id={tab.id}
                                     className={`settings-tab-btn ${isActive ? 'active' : ''}`}
-                                    onClick={() => setActiveSettingsTab(tab.id)}
+                                    onClick={(e) => {
+                                        if (settingsTabDragMovedRef.current) {
+                                            e.preventDefault();
+                                            return;
+                                        }
+                                        setActiveSettingsTab(tab.id);
+                                        if (e.currentTarget && typeof e.currentTarget.scrollIntoView === 'function') {
+                                            e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                                        }
+                                    }}
                                     style={isActive ? {
                                         borderColor: tabColor,
                                         background: `${tabColor}24`,
@@ -22297,7 +22484,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                         <div style={{ fontSize: '10px', color: 'var(--text-dim)', marginBottom: '12px', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", lineHeight: 1.4 }}>
                                 // Select a pre-configured ROM cartridge loadout or save your current deck state!
                             <br /><br />
-                            <span style={{ color: '#00E5FF', fontWeight: 'bold' }}>M.I.K.A:</span> Optimal default. <span style={{ color: '#00FF41', fontWeight: 'bold' }}>LOCAL_ECO:</span> Core-only for local LLMs. <br /><span style={{ color: '#FF107A', fontWeight: 'bold' }}>IMMERSIVE:</span> All 8 ROMs slotted. <span style={{ color: '#FFD700', fontWeight: 'bold' }}>VANILLA:</span> SFW loadout.
+                            <span style={{ color: '#00E5FF', fontWeight: 'bold' }}>M.I.K.A:</span> Optimal default. <span style={{ color: '#00FF41', fontWeight: 'bold' }}>LOCAL_ECO:</span> Core-only for local LLMs. <br /><span style={{ color: '#FF107A', fontWeight: 'bold' }}>IMMERSIVE:</span> All {CARTRIDGE_MANIFEST.length} ROMs slotted. <span style={{ color: '#FFD700', fontWeight: 'bold' }}>VANILLA:</span> SFW loadout.
                         </div>
 
                         <div style={{ display: 'flex', gap: '6px', width: '100%', flexWrap: 'wrap', marginBottom: '12px' }}>
@@ -22398,15 +22585,15 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                             <span style={{ fontSize: '9px', fontWeight: '900', color: '#00E5FF', letterSpacing: '0.1em' }}>
-                                🔌 MOTHERBOARD_BUS // 8-BAY RACK
+                                🔌 MOTHERBOARD_BUS // {CARTRIDGE_MANIFEST.length}-BAY RACK
                             </span>
                             <span style={{ fontSize: '9px', color: slottedCount > 0 ? '#00FF41' : 'rgba(255,255,255,0.4)', fontWeight: 'bold' }}>
                                 BUS LOAD: {Math.round((slottedCount / CARTRIDGE_MANIFEST.length) * 100)}%
                             </span>
                         </div>
 
-                        {/* Interactive 8-Bay Mini Cartridge Top-Down Rack */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '5px', marginBottom: '10px', padding: '8px 6px', background: '#040207', borderRadius: '6px', border: '1px inset rgba(255,255,255,0.1)' }}>
+                        {/* Interactive Mini Cartridge Top-Down Rack */}
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${CARTRIDGE_MANIFEST.length}, 1fr)`, gap: '5px', marginBottom: '10px', padding: '8px 6px', background: '#040207', borderRadius: '6px', border: '1px inset rgba(255,255,255,0.1)' }}>
                             {CARTRIDGE_MANIFEST.map((c, idx) => {
                                 const on = c.isSlotted;
                                 return (
@@ -22435,7 +22622,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                             boxShadow: on ? `0 0 6px ${c.color}` : 'none'
                                         }} />
                                         <span style={{ fontSize: '8px', fontWeight: '900', color: on ? '#FFFFFF' : 'rgba(255,255,255,0.3)', letterSpacing: '0.02em' }}>
-                                            0{idx + 1}
+                                            {String(idx + 1).padStart(2, '0')}
                                         </span>
                                         <span style={{
                                             width: '70%', height: '3px',
@@ -22457,7 +22644,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                 className="btn btn-outline"
                                 style={{ flex: 1, padding: '7px 8px', fontSize: '9px', margin: 0, borderRadius: '4px', borderColor: 'rgba(0, 255, 65, 0.5)', color: '#00FF41', background: 'rgba(0, 255, 65, 0.1)', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontWeight: 'bold', letterSpacing: '0.06em' }}
                                 onClick={() => {
-                                    updateSlottedCartridges({ meow: true, obsession: true, mika_proxy: true, purr: true, daw: true, late_night: slottedCartridges.late_night, oob_glass: true, arcade: true });
+                                    updateSlottedCartridges({ meow: true, obsession: true, mika_proxy: true, purr: true, daw: true, late_night: slottedCartridges.late_night, oob_glass: true, arcade: true, preset_engine: true });
                                     setEnableMeowEngine(true);
                                     setEnableSelfieAutonomy(true);
                                     setEnableProactiveSelfies(true);
@@ -22480,7 +22667,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                 className="btn btn-outline"
                                 style={{ flex: 1, padding: '7px 8px', fontSize: '9px', margin: 0, borderRadius: '4px', borderColor: 'rgba(255, 85, 85, 0.5)', color: '#FF5555', background: 'rgba(255, 85, 85, 0.1)', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontWeight: 'bold', letterSpacing: '0.06em' }}
                                 onClick={() => {
-                                    updateSlottedCartridges({ meow: false, obsession: false, mika_proxy: false, purr: false, daw: false, late_night: false, oob_glass: false, arcade: false });
+                                    updateSlottedCartridges({ meow: false, obsession: false, mika_proxy: false, purr: false, daw: false, late_night: false, oob_glass: false, arcade: false, preset_engine: false });
                                     setEnableMeowEngine(false);
                                     setProactiveOffline(false);
                                     setProactiveIdle(false);
@@ -22695,7 +22882,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                             {active && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setActiveSettingsTab(cart.targetTab)}
+                                                    onClick={() => handleJumpToCartridgeBay(cart)}
                                                     style={{
                                                         padding: '9px 12px', borderRadius: '5px',
                                                         fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace",
@@ -23758,7 +23945,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                 <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#00E5FF', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
                                     {t('profile_injection_1on1', '> 1-ON-1_PROFILE_INJECTION')}
                                 </div>
-                                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: 'rgba(0, 229, 255, 0.1)', color: '#00E5FF', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
+                                <span style={{ fontSize: '9px', padding: '2px 7px', borderRadius: '3px', background: 'rgba(0, 229, 255, 0.1)', color: '#00E5FF', border: '1px solid rgba(0, 229, 255, 0.3)', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
                                     {chatProfileDetail === 'dynamic' ? '~150-180 TOKENS' : chatProfileDetail === 'condensed' ? '~40-50 TOKENS' : chatProfileDetail === 'truncated' ? '~120-150 TOKENS' : '~800-1500 TOKENS'}
                                 </span>
                             </div>
@@ -24634,11 +24821,11 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                         if (typeof showToast === 'function') showToast('⏏️ Ejected [ROM-07: OOB_GLASS_DIRECTORS]');
                                     })}
                                     <div className="list-item" style={{ flexDirection: 'column', alignItems: 'flex-start', border: '1px solid rgba(181, 51, 255, 0.3)', background: 'rgba(181, 51, 255, 0.04)', padding: '16px', borderRadius: '8px' }}>
-                                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                            <div style={{ fontWeight: 'bold', color: '#B533FF', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '13px', letterSpacing: '0.05em' }}>
+                                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                                            <div style={{ fontWeight: 'bold', color: '#B533FF', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '13px', letterSpacing: '0.05em', minWidth: 0 }}>
                                                 🔮 &gt; OOB_GLASS_DIRECTORS // SIDE-CHANNEL MATRIX
                                             </div>
-                                            <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: isOobSupported() ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 69, 0, 0.15)', color: isOobSupported() ? '#00FF41' : '#FF4500', border: isOobSupported() ? '1px solid #00FF41' : '1px solid #FF4500', fontWeight: 'bold', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" }}>
+                                            <span style={{ fontSize: '9px', padding: '3px 8px', borderRadius: '4px', background: isOobSupported() ? 'rgba(0, 255, 65, 0.15)' : 'rgba(255, 69, 0, 0.15)', color: isOobSupported() ? '#00FF41' : '#FF4500', border: isOobSupported() ? '1px solid #00FF41' : '1px solid #FF4500', fontWeight: 'bold', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", whiteSpace: 'nowrap', flexShrink: 0 }}>
                                                 {isOobSupported() ? 'READY' : 'HOST TOO OLD'}
                                             </span>
                                         </div>
@@ -24802,6 +24989,23 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                     </div>
                                 </div>
                             )}
+                    {/* ✨ ROM-09: M.I.K.A._PRESET_ENGINE (.risup / .charx / .risum / ST .json) ✨ */}
+                    {slottedCartridges.preset_engine && (
+                        <div style={{ marginTop: '20px', marginBottom: '12px' }}>
+                            {renderCartridgeBayHeader('ROM-09', 'PRESET ENGINE', '#FF107A', () => {
+                                updateSlottedCartridges({ preset_engine: false });
+                                triggerCartridgeEvent({ id: 'preset_engine', code: 'ROM-09', title: 'PRESET ENGINE', subtitle: 'RisuAI (.risup), CharX/RisuM (.charx/.risum) & SillyTavern (.json)', badge: 'PRESET ENGINE', color: '#FF107A' }, 'eject');
+                                if (typeof showToast === 'function') showToast(t('rom09_toast_ejected', '⏏️ Ejected [ROM-09: PRESET ENGINE]'));
+                            })}
+                            {PresetCtrlUI && (
+                                <PresetCtrlUI.RomPanel
+                                    onOpenPresetCtrl={() => setIsPresetCtrlOpen(true)}
+                                    showToast={showToast}
+                                />
+                            )}
+                        </div>
+                    )}
+
                     {/* 🌟 GROUP: SYSTEM & ENGINE 🌟 */}
                     <div style={{ fontSize: '11px', fontWeight: '800', color: '#00E5FF', marginTop: '24px', marginBottom: '8px', letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", textShadow: '0 0 8px rgba(0,229,255,0.3)', borderBottom: '1px solid rgba(0,229,255,0.15)', paddingBottom: '8px' }}>{t('group_system_engine', '> SYSTEM & ENGINE')}</div>
 
@@ -29346,7 +29550,7 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                                                         setIsDataCtrlMenuOpen(false);
                                                                         handleReprocessProfile(sourceChatId);
                                                                     }}
-                                                                    style={{ textAlign: 'left', padding: '8px', background: 'rgba(255, 16, 122, 0.1)', border: '1px solid rgba(255, 16, 122, 0.3)', color: '#FF107A', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                                                    style={{ textAlign: 'left', padding: '8px', background: 'rgba(255, 16, 122, 0.1)', border: '1px solid rgba(255, 16, 122, 0.3)', color: '#FF107A', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'opacity 0.2s ease', display: 'flex', alignItems: 'center', gap: '6px' }}
                                                                     onMouseOver={e => e.currentTarget.style.background = 'rgba(255,16,122,0.2)'}
                                                                     onMouseOut={e => e.currentTarget.style.background = 'rgba(255,16,122,0.1)'}
                                                                 >
@@ -30777,6 +30981,9 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                                                                 <button onClick={() => { setIsGroupAdminMenuOpen(false); handleStartNewChat(activeChatId); }} style={{ textAlign: 'left', padding: '8px', background: 'rgba(0, 255, 65, 0.1)', border: '1px solid rgba(0, 255, 65, 0.3)', color: '#00FF41', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(0,255,65,0.2)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(0,255,65,0.1)'}>✨ NEW_CHAT</button>
                                                                 <button onClick={() => { setIsGroupAdminMenuOpen(false); setIsChatCtrlOpen(true); }} style={{ textAlign: 'left', padding: '8px', background: 'rgba(0, 229, 255, 0.1)', border: '1px solid rgba(0, 229, 255, 0.3)', color: '#00E5FF', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(0,229,255,0.2)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(0,229,255,0.1)'}>📼 CHAT_CTRL{(chatArchives[activeChatId]?.length || 0) > 0 ? ` (${chatArchives[activeChatId].length})` : ''}</button>
                                                             </React.Fragment>
+                                                        )}
+                                                        {slottedCartridges.preset_engine && (
+                                                            <button onClick={() => { setIsGroupAdminMenuOpen(false); setIsPresetCtrlOpen(true); }} style={{ textAlign: 'left', padding: '8px', background: 'rgba(255, 16, 122, 0.12)', border: '1px solid rgba(255, 16, 122, 0.35)', color: '#FF107A', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,16,122,0.24)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,16,122,0.12)'}>🎛️ {t('btn_open_preset_ctrl', 'PRESET ENGINE')}</button>
                                                         )}
                                                         <button onClick={() => { setIsGroupAdminMenuOpen(false); setShowPoseSuggest(true); }} style={{ textAlign: 'left', padding: '8px', background: 'rgba(255, 145, 0, 0.1)', border: '1px solid rgba(255, 145, 0, 0.3)', color: '#FF9100', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,145,0,0.2)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,145,0,0.1)'}>🎯 SUGGEST_POSE</button>
                                                         <button onClick={() => { setIsGroupAdminMenuOpen(false); setGroupAdminModal({ type: 'rename', chatId: activeChatId }); }} style={{ textAlign: 'left', padding: '8px', background: 'rgba(181, 51, 255, 0.1)', border: '1px solid rgba(181, 51, 255, 0.3)', color: '#B533FF', borderRadius: '4px', cursor: 'pointer', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", fontSize: '10px', fontWeight: 'bold', transition: 'all 0.2s' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(181,51,255,0.2)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(181,51,255,0.1)'}>✏️ RENAME_CHAT</button>
@@ -40441,6 +40648,15 @@ ${degenMode && !isSprite ? "5. DEGENERATE OVERRIDE: Inject unhinged, cursed, or 
                 onExportLayla={handleExportChatArchiveLayla}
                 onImportFile={handleChatArchiveImportFile}
             />
+
+            {/* ✨ ROM-09: PRESET ENGINE MODAL (mounted only while open for zero chat/DiT idle overhead) ✨ */}
+            {PresetCtrlUI && isPresetCtrlOpen && (
+                <PresetCtrlUI.Modal
+                    isOpen={isPresetCtrlOpen}
+                    onClose={() => setIsPresetCtrlOpen(false)}
+                    showToast={showToast}
+                />
+            )}
 
             {/* ✨ MIKA'S MATRIX MUTATION & CLEAR MODAL ✨ */}
             <MatrixMutationModal

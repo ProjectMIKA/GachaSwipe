@@ -545,6 +545,27 @@
         .settings-tab-nav::-webkit-scrollbar {
             display: none;
         }
+        @media (hover: hover) and (pointer: fine) {
+            .settings-tab-nav {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(0, 229, 255, 0.35) rgba(5, 3, 8, 0.6);
+                cursor: grab;
+            }
+            .settings-tab-nav::-webkit-scrollbar {
+                display: block;
+                height: 3px;
+            }
+            .settings-tab-nav::-webkit-scrollbar-track {
+                background: rgba(5, 3, 8, 0.6);
+            }
+            .settings-tab-nav::-webkit-scrollbar-thumb {
+                background: rgba(0, 229, 255, 0.35);
+                border-radius: 2px;
+            }
+            .settings-tab-nav::-webkit-scrollbar-thumb:hover {
+                background: #00E5FF;
+            }
+        }
         .settings-tab-btn {
             display: inline-flex;
             align-items: center;
