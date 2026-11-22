@@ -8,14 +8,12 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import { XIcon, HeartIcon } from './Icons.jsx';
 import { CREDITS_OWNER, CREDITS_CONTRIBUTORS, CREDITS_CONTRIBUTING_URL } from '../data/credits.js';
 
-// ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
+// ✨ MIKA'S CREDITS REGISTRY (v2.7.89) ✨
 // WHY: the open-source layer needs a permanent, in-app home for contributor credit —
 // not a README nobody opens. Two exports, both dumb presentational components:
-//   <CreditsBadge onOpen /> — persistent fixed chip (bottom-right) while the settings
-//     screen is mounted; it lives inside that screen's conditional render so it
-//     unmounts with it. position:fixed is sanctioned by the containing-block law
-//     (panel ancestors carry no transform/filter — the chip escapes .panel-right-body
-//     cleanly) and sits clear of TerminalToast (top-center).
+//   <CreditsBadge onOpen /> — inline pill centered right under the settings subtitle
+//     (v2.7.89 placement: the v2.7.88 fixed bottom-right chip blocked > BACK_TO_SWIPE).
+//     Mounts inside the settings screen's conditional render so it unmounts with it.
 //   <CreditsModal onClose /> — the OobTrace terminal chassis: fixed overlay + blur +
 //     fadeIn, purple owner lane / cyan contributor lane, HeartIcon from the shared
 //     icon pool, blinking-cursor footer. Every animation reuses existing compositor-
@@ -31,8 +29,7 @@ export const CreditsBadge = ({ onOpen }) => {
             onClick={onOpen}
             title={t('credits_badge_title', 'Open the credits registry')}
             style={{
-                position: 'fixed', right: '14px', bottom: '14px', zIndex: 9600,
-                display: 'flex', alignItems: 'center', gap: '7px', padding: '7px 12px',
+                display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '7px 12px',
                 background: 'rgba(11, 9, 20, 0.92)', border: '1px solid rgba(181, 51, 255, 0.45)',
                 borderRadius: '999px', cursor: 'pointer',
                 fontFamily: MONO, fontSize: '10px', fontWeight: 'bold', letterSpacing: '0.08em',

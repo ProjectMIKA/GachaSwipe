@@ -748,7 +748,7 @@ const SPRITE_BG_TOKENS = {
 };
 
 // ✨ MIKA'S TUTORIAL SYSTEM ✨
-const TUTORIAL_VERSION = 5.1; // ✨ THE CARTRIDGE BAY — Retro ROM Cartridge Rack & Dynamic 5-Tab Settings Navigation
+const TUTORIAL_VERSION = 5.2; // ✨ THE CREDIT ROLL — CREDITS_REGISTRY badge + ROM-09 PRESET ENGINE (bump = the update auto-open law)
 
 // ✨ MIKA'S TUTORIAL STEP DATABASE ✨
 
@@ -22325,14 +22325,16 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                         <webPlatform.PwaInstallButton />
                     </div>
                 )}
-                {/* ✨ MIKA'S CREDITS REGISTRY BADGE (v2.7.88) ✨ — persistent one-click credit roll.
-                    Lives inside the settings screen's conditional render so it unmounts with it;
-                    position:fixed is sanctioned by the containing-block law (no transform/filter
-                    on panel ancestors — the chip escapes .panel-right-body cleanly) and sits
-                    clear of TerminalToast (top-center). */}
-                <CreditsBadge onOpen={() => setIsCreditsOpen(true)} />
                 <h2 style={{ margin: '0 0 8px 0', color: '#00E5FF', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", textShadow: '0 0 12px rgba(0,229,255,0.4)', letterSpacing: '0.1em' }}>{t('director_settings_title', '> DIRECTOR_SETTINGS')}</h2>
                 <p style={{ color: 'rgba(0, 229, 255, 0.5)', marginBottom: '30px', fontSize: '11px', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", letterSpacing: '0.05em' }}>{t('director_settings_subtitle', '// Slot expansion ROM cartridges or fine-tune your core matrix.')}</p>
+
+                {/* ✨ MIKA'S CREDITS REGISTRY BADGE (v2.7.89) ✨ — inline, centered right under the
+                    settings subtitle (the v2.7.88 fixed bottom-right chip blocked > BACK_TO_SWIPE).
+                    Still mounts inside the settings screen's conditional render so it unmounts with it;
+                    visible on every settings tab since it sits above the tab nav in the header flow. */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-22px', marginBottom: '24px' }}>
+                    <CreditsBadge onOpen={() => setIsCreditsOpen(true)} />
+                </div>
 
                 <div style={{ width: '100%', maxWidth: '400px', textAlign: 'left' }}>
 
