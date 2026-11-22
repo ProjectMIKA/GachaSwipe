@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { DEFAULT_THEMES, TUTORIAL_STEPS, EXPANDED_GENRES, NAME_ORIGINS, NAME_STYLES, KNOWN_CHAR_CATEGORIES, DEFAULT_PROXY, GRADIENTS, MUSIC_TAG_DB, GACHASWIPE_TTS_PRESETS, APP_VERSION, WHATS_NEW } from './data/constants.js';
 import lamejs from './lame.all.js';
 import { SwipeCard } from './components/SwipeCard.jsx';
+import { CreditsBadge, CreditsModal } from './components/CreditsModal.jsx'; // ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
 import { LoadingCard } from './components/LoadingCard.jsx';
 import { ProfileMemoryArchive } from './components/ProfileMemoryArchive.jsx';
 import { TerminalToast } from './components/TerminalToast.jsx';
@@ -917,6 +918,7 @@ function App({ webPlatform = null }) {
     const [activeDiveByChat, setActiveDiveByChat] = useState({});
     const [isLucidityDiagnosticOpen, setIsLucidityDiagnosticOpen] = useState(false);
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+    const [isCreditsOpen, setIsCreditsOpen] = useState(false); // ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
     const [isExtractingLoot, setIsExtractingLoot] = useState(false);
 
     // ✨ MIKA'S STALE-STATE SAVER REF ✨
@@ -22323,6 +22325,12 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                         <webPlatform.PwaInstallButton />
                     </div>
                 )}
+                {/* ✨ MIKA'S CREDITS REGISTRY BADGE (v2.7.88) ✨ — persistent one-click credit roll.
+                    Lives inside the settings screen's conditional render so it unmounts with it;
+                    position:fixed is sanctioned by the containing-block law (no transform/filter
+                    on panel ancestors — the chip escapes .panel-right-body cleanly) and sits
+                    clear of TerminalToast (top-center). */}
+                <CreditsBadge onOpen={() => setIsCreditsOpen(true)} />
                 <h2 style={{ margin: '0 0 8px 0', color: '#00E5FF', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", textShadow: '0 0 12px rgba(0,229,255,0.4)', letterSpacing: '0.1em' }}>{t('director_settings_title', '> DIRECTOR_SETTINGS')}</h2>
                 <p style={{ color: 'rgba(0, 229, 255, 0.5)', marginBottom: '30px', fontSize: '11px', fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace", letterSpacing: '0.05em' }}>{t('director_settings_subtitle', '// Slot expansion ROM cartridges or fine-tune your core matrix.')}</p>
 
@@ -40669,6 +40677,11 @@ ${degenMode && !isSprite ? "5. DEGENERATE OVERRIDE: Inject unhinged, cursed, or 
                 onContinueExtended={handleContinueExtended}
                 isExtracting={isExtractingLoot}
             />
+
+            {/* ✨ MIKA'S CREDITS REGISTRY MODAL (v2.7.88) — mounted only while open ✨ */}
+            {isCreditsOpen && (
+                <CreditsModal onClose={() => setIsCreditsOpen(false)} />
+            )}
 
             {/* ✨ MIKA'S LUCIDITY DIAGNOSTIC & TELEMETRY MODAL ✨ */}
             <LucidityDiagnosticModal

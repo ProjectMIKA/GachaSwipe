@@ -78,6 +78,9 @@ export default [
             'no-this-before-super': 'error',
 
             // ── jsx hygiene ──
+            'react/jsx-uses-vars': 'error',     // marks JSX usage as used — without it, component/icon
+                                                // imports used only in JSX are false-flagged as unused
+                                                // (OobTraceModal icons, CreditsBadge/Modal, etc.)
             'react/jsx-key': 'error',
             'react/jsx-no-duplicate-props': 'error',
             'react/no-unknown-property': 'off', // inline styles + css custom props everywhere

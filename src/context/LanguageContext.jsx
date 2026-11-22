@@ -474,7 +474,22 @@ export const enTemplate = {
     // Swipe Card Stamps
     stamp_like: "LIKE",
     stamp_nope: "NOPE",
-    stamp_pass: "PASS"
+    stamp_pass: "PASS",
+
+    // ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
+    credits_badge_label: "> CREDITS",
+    credits_badge_title: "Open the credits registry",
+    credits_title: "> CREDITS_REGISTRY",
+    credits_close: "Close",
+    credits_owner_section: "> OWNER & MAINTAINER",
+    credits_role_owner: "OWNER / MAINTAINER",
+    credits_contributors_section: "> CONTRIBUTORS",
+    credits_open_profile: "→ GITHUB_PROFILE",
+    credits_empty_contributors: "// The bay awaits its first merged contribution.",
+    credits_join_title: "> WANT YOUR NAME HERE?",
+    credits_join_desc: "// Read CONTRIBUTING.md, sign the CLA, ship something beautiful.",
+    credits_contributing_btn: "CONTRIBUTING.MD",
+    credits_footer_note: "// Built in the open. Credited in the open."
 };
 
 const LanguageContext = createContext({

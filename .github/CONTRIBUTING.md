@@ -7,7 +7,7 @@ contributors — please read this before opening a pull request.
 ## ✍️ Step 1: The CLA (required)
 
 To keep the project's licensing clean and sustainable, every contributor
-signs our [Individual Contributor License Agreement](../CLA.md) — once, one
+signs our [Individual Contributor License Agreement](https://github.com/ProjectMIKA/GachaSwipe/blob/main/CLA.md) — once, one
 click. **CLA Assistant** will automatically comment on your first pull
 request with a signing link; merges stay blocked until it is signed. You
 keep full ownership and credit for your code.
@@ -16,7 +16,7 @@ keep full ownership and credit for your code.
 keeps the project's rights unified so that if this code ever powers other
 surfaces (the gachaswipe.com web app, an app-store release), ProjectMIKA
 can license those cleanly. Your contribution keeps working in the free app
-either way — see [Why this CLA exists](../blob/main/CLA.md#why-this-cla-exists-the-short-version)
+either way — see [Why this CLA exists](https://github.com/ProjectMIKA/GachaSwipe/blob/main/CLA.md#why-this-cla-exists-the-short-version)
 in the agreement itself.
 
 ## 🛠️ Getting started
@@ -99,4 +99,4 @@ class, cache behavior), not just the what.
 ## 📜 License
 
 By contributing, you agree that your contributions are distributed under
-[AGPL-3.0-or-later](../LICENSE) and covered by the [CLA](../CLA.md).
+[AGPL-3.0-or-later](https://github.com/ProjectMIKA/GachaSwipe/blob/main/LICENSE) and covered by the [CLA](https://github.com/ProjectMIKA/GachaSwipe/blob/main/CLA.md).
