@@ -10,7 +10,7 @@ export const CREDITS_OWNER = {
     handle: '@ProjectMIKA',
     url: 'https://github.com/ProjectMIKA',
     role: 'OWNER / MAINTAINER',
-    note: '// Architect & steward of the GachaSwipe ecosystem and the Layla Network host.'
+    note: '// Architect & steward of GachaSwipe — a self-contained mini-app running on the Layla Network host.'
 };
 
 export const CREDITS_CONTRIBUTORS = [

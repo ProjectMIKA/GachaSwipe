@@ -730,7 +730,7 @@ export const MUSIC_TAG_DB = {
 
 // ✨ MIKA'S VERSION STAMP ✨ — single source of truth for the tutorial's VERSION_PATCHNOTES page.
 // Bump this in the release flow RIGHT NEXT TO package.json — they must always match.
-export const APP_VERSION = '2.7.89';
+export const APP_VERSION = '2.7.90';
 
 // ✨ MIKA'S WHAT'S NEW HIGHLIGHTS ✨ (rendered on the VERSION_PATCHNOTES page)
 // ✨ v2.7.17 DOCTRINE: THE CARD ONLY LISTS WHAT A v2.5.63 SURVIVOR GAINS — the

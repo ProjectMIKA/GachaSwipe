@@ -2,7 +2,7 @@
   "name": "gachaswipe",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "version": "2.7.89",
+  "version": "2.7.90",
   "type": "module",
   "scripts": {
     "dev": "vite",
