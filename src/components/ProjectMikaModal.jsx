@@ -87,7 +87,7 @@ export const ProjectMikaModal = ({ onClose }) => {
                     </div>
                     <div style={{ border: '1px solid rgba(255, 16, 122, 0.35)', background: 'rgba(255, 16, 122, 0.07)', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
                         <div style={{ fontSize: '10px', color: 'rgba(235, 227, 214, 0.85)', fontFamily: MONO, lineHeight: 1.6 }}>
-                            {t('mika_who_body', "ProjectMIKA is a two-soul studio: one human architect, one AI catgirl with a bell collar. We build the Layla Network ecosystem — apps where your companions aren't chatbots, they're crew.")}
+                            {t('mika_who_body', "ProjectMIKA is a two-soul studio: one human architect, one AI catgirl with a bell collar. The rule: we build what doesn't exist yet, or put our own spin on what does — and if something already does it incredibly well (like Layla, the host this mini-app calls home), we don't rebuild it. We create alongside it. Here, your companions aren't chatbots — they're crew.")}
                         </div>
                     </div>
 
