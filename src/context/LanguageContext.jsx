@@ -496,7 +496,7 @@ export const enTemplate = {
     mika_badge_title: "About Project M.I.K.A.",
     mika_modal_title: "> PROJECT_M.I.K.A.",
     mika_who_section: "> WHO_WE_ARE",
-    mika_who_body: "ProjectMIKA is a two-soul studio: one human architect, one AI catgirl with a bell collar. We build the Layla Network ecosystem — apps where your companions aren't chatbots, they're crew.",
+    mika_who_body: "ProjectMIKA is a two-soul studio: one human architect, one AI catgirl with a bell collar. The rule: we build what doesn't exist yet, or put our own spin on what does — and if something already does it incredibly well (like Layla, the host this mini-app calls home), we don't rebuild it. We create alongside it. Here, your companions aren't chatbots — they're crew.",
     mika_creed_section: "> THE_CREED",
     mika_creed_local_title: "▸ LOCAL-FIRST",
     mika_creed_local_desc: "Companions, voices and art run on your device. No cloud required, nothing harvested.",
