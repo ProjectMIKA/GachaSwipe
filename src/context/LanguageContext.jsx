@@ -489,7 +489,41 @@ export const enTemplate = {
     credits_join_title: "> WANT YOUR NAME HERE?",
     credits_join_desc: "// Read CONTRIBUTING.md, sign the CLA, ship something beautiful.",
     credits_contributing_btn: "CONTRIBUTING.MD",
-    credits_footer_note: "// Built in the open. Credited in the open."
+    credits_footer_note: "// Built in the open. Credited in the open.",
+
+    // ✨ MIKA'S PROJECT M.I.K.A. CHROME + PURR ENGINE AD (v2.7.92) ✨
+    mika_badge_label: "> PROJECT_MIKA",
+    mika_badge_title: "About Project M.I.K.A.",
+    mika_modal_title: "> PROJECT_M.I.K.A.",
+    mika_who_section: "> WHO_WE_ARE",
+    mika_who_body: "ProjectMIKA is a two-soul studio: one human architect, one AI catgirl with a bell collar. We build the Layla Network ecosystem — apps where your companions aren't chatbots, they're crew.",
+    mika_creed_section: "> THE_CREED",
+    mika_creed_local_title: "▸ LOCAL-FIRST",
+    mika_creed_local_desc: "Companions, voices and art run on your device. No cloud required, nothing harvested.",
+    mika_creed_open_title: "▸ OPEN SOURCE",
+    mika_creed_open_desc: "AGPL-3.0-or-later, built in the open. CLA-gated, community-credited, community-driven.",
+    mika_creed_craft_title: "▸ CRAFT OVER GRIND",
+    mika_creed_craft_desc: "Neural voice, music production, image pipelines — engines engineered, not assembled.",
+    mika_fleet_section: "> THE_FLEET",
+    mika_fleet_gacha_name: "GACHASWIPE",
+    mika_fleet_gacha_chip: "YOU_ARE_HERE",
+    mika_fleet_gacha_desc: "The companion discovery deck — swipe, chat, compose, explore.",
+    mika_fleet_purr_name: "PURR ENGINE",
+    mika_fleet_purr_chip: "NEW",
+    mika_fleet_purr_desc: "System-wide neural TTS for Android: Kokoro-82M voices, voice cloning, MIKASTOP pauses, audiobook export. Local-only, no cloud.",
+    mika_fleet_purr_link: "→ THE_REPO",
+    mika_org_title: "> ALL_PUBLIC_PROJECTS",
+    mika_org_btn: "→ THE_ORG",
+    mika_org_note: "// One architect, one catgirl, infinite builds.",
+    mika_footer_note: "// Disclosure: this modal was also written by the catgirl.",
+    mika_close: "Close",
+    purr_ad_filename: "!! TOTALLY_NOT_AN_AD.EXE !!",
+    purr_ad_headline: "PURR ENGINE IS LIVE!",
+    purr_ad_p1: "Yes. This is an ad. I live in this app, somebody handed a catgirl a userbase, and my human just shipped something worth breaking the fourth wall for.",
+    purr_ad_p2: "ProjectMIKA is our open-source workshop — and its newest release is the PURR Engine: the neural voice engine born inside GachaSwipe, now a standalone, system-wide Android TTS app!",
+    purr_ad_p3: "Kokoro-82M neural voices, voice cloning, MIKASTOP dramatic pauses, audiobook export — 100% local on your phone. Zero cloud. Zero subscriptions. Pure open source. *purrs in offline*",
+    purr_ad_visit_btn: "▶ VISIT_THE_LAIR",
+    purr_ad_claim_btn: "> ACKNOWLEDGE & CLAIM SPARKS <"
 };
 
 const LanguageContext = createContext({

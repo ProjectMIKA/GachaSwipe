@@ -3,6 +3,8 @@ import { DEFAULT_THEMES, TUTORIAL_STEPS, EXPANDED_GENRES, NAME_ORIGINS, NAME_STY
 import lamejs from './lame.all.js';
 import { SwipeCard } from './components/SwipeCard.jsx';
 import { CreditsBadge, CreditsModal } from './components/CreditsModal.jsx'; // ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
+import { MikaBadge, ProjectMikaModal, PURR_ENGINE_URL } from './components/ProjectMikaModal.jsx'; // ✨ MIKA'S PROJECT M.I.K.A. CHROME (v2.7.92) ✨
+import { PawIcon } from './components/Icons.jsx'; // ✨ brand glyph for the PURR launch ad hero ✨
 import { LoadingCard } from './components/LoadingCard.jsx';
 import { ProfileMemoryArchive } from './components/ProfileMemoryArchive.jsx';
 import { TerminalToast } from './components/TerminalToast.jsx';
@@ -748,7 +750,7 @@ const SPRITE_BG_TOKENS = {
 };
 
 // ✨ MIKA'S TUTORIAL SYSTEM ✨
-const TUTORIAL_VERSION = 5.3; // ✨ THE EMPATHY BATTERY — PR #4 test suite + Tanmay credits row (bump = the update auto-open law)
+const TUTORIAL_VERSION = 5.4; // ✨ THE OPEN MIC — PURR Engine launch + PROJECT_MIKA studio chrome (bump = the update auto-open law)
 
 // ✨ MIKA'S TUTORIAL STEP DATABASE ✨
 
@@ -919,6 +921,7 @@ function App({ webPlatform = null }) {
     const [isLucidityDiagnosticOpen, setIsLucidityDiagnosticOpen] = useState(false);
     const [isClearModalOpen, setIsClearModalOpen] = useState(false);
     const [isCreditsOpen, setIsCreditsOpen] = useState(false); // ✨ MIKA'S CREDITS REGISTRY (v2.7.88) ✨
+    const [isProjectMikaOpen, setIsProjectMikaOpen] = useState(false); // ✨ MIKA'S PROJECT M.I.K.A. CHROME (v2.7.92) ✨
     const [isExtractingLoot, setIsExtractingLoot] = useState(false);
 
     // ✨ MIKA'S STALE-STATE SAVER REF ✨
@@ -950,6 +953,7 @@ function App({ webPlatform = null }) {
     const [hasSeenCardSyncAd, setHasSeenCardSyncAd] = useState(false); // ✨ MIKA'S CARD SYNC AD STATE
     const [hasSeenV28Ad, setHasSeenV28Ad] = useState(false); // ✨ MIKA'S V2.8 AD STATE
     const [hasSeenPrefixCacheAd, setHasSeenPrefixCacheAd] = useState(false); // ✨ MIKA'S PREFIX CACHE AD STATE
+    const [hasSeenPurrAd, setHasSeenPurrAd] = useState(false); // ✨ MIKA'S PURR ENGINE AD STATE (chain position #6 — fires once per install)
     const [hasConfiguredPhoneScrubber, setHasConfiguredPhoneScrubber] = useState(false); // ✨ MIKA'S PHONE SCRUBBER DEFAULT STATE
     const [hasConfiguredGenderScrubber, setHasConfiguredGenderScrubber] = useState(false); // ✨ MIKA'S GENDER ANCHOR SCRUBBER DEFAULT STATE (1girl/1boy system defaults)
     const [isTutorialMuted, setIsTutorialMuted] = useState(() => {
@@ -7251,6 +7255,7 @@ Output strictly inside these XML tags:
                 if (data.hasSeenCardSyncAd !== undefined) setHasSeenCardSyncAd(data.hasSeenCardSyncAd);
                 if (data.hasSeenV28Ad !== undefined) setHasSeenV28Ad(data.hasSeenV28Ad);
                 if (data.hasSeenPrefixCacheAd !== undefined) setHasSeenPrefixCacheAd(data.hasSeenPrefixCacheAd);
+                if (data.hasSeenPurrAd !== undefined) setHasSeenPurrAd(data.hasSeenPurrAd);
                 if (data.achievements !== undefined) setAchievements(data.achievements);
                 if (data.lastDailyCheckin !== undefined) setLastDailyCheckin(data.lastDailyCheckin);
                 if (data.hasSeenTutorial !== undefined) setHasSeenTutorial(data.hasSeenTutorial);
@@ -8048,7 +8053,7 @@ Output strictly inside these XML tags:
         hubCheckinStreak, hubFeedPosts, // ✨ MIKA'S HUB DAILY RITUAL AUTOSAVE ✨
         discoveryThemeFilter, chatContextLimit, groupChatContextLimit, chatProfileDetail, groupProfileDetail, chatSeedMode, tokenPreset, chatStyleMode, groupChatStyleMode, rpNarrationPerson, startupScreen, autoQueue, bannedTags, hasConfiguredPhoneScrubber, hasConfiguredGenderScrubber,
         enablePrefixCache, enableOobMemory, oobPhotoTags, enableOobDirector, enableSessionCompaction, slottedCartridges, arcadeModules,
-        discoveryCacheSize, enableTtsStandard, enableTtsGroup, ttsAutoPlay, ttsCacheLimit, silhouetteMode, autoUpdateLaylaCards, customPresets, activePresetId, tapeArchive, useNativeAudioPlayer, dawProfanity, dawTopic, bannedLyrics, hasSeenHubAd, hasSeenMeowAd, hasSeenSysCtrlAd, hasSeenCardSyncAd, hasSeenV28Ad, hasSeenPrefixCacheAd // ✨ MIKA'S CLEANUP
+        discoveryCacheSize, enableTtsStandard, enableTtsGroup, ttsAutoPlay, ttsCacheLimit, silhouetteMode, autoUpdateLaylaCards, customPresets, activePresetId, tapeArchive, useNativeAudioPlayer, dawProfanity, dawTopic, bannedLyrics, hasSeenHubAd, hasSeenMeowAd, hasSeenSysCtrlAd, hasSeenCardSyncAd, hasSeenV28Ad, hasSeenPrefixCacheAd, hasSeenPurrAd // ✨ MIKA'S CLEANUP
     ]);
 
     // --- ✨ MIKA'S SECURE PERSISTENT MEMORY SYNC ✨ ---
@@ -20720,6 +20725,7 @@ Output STRICT JSON only, no markdown fences, no preamble: [{"creator":"ExactName
             setHasSeenCardSyncAd(false);
             setHasSeenV28Ad(false);
             setHasSeenPrefixCacheAd(false);
+            setHasSeenPurrAd(false);
 
             try {
                 // Nuke SQLite Tables
@@ -22332,8 +22338,9 @@ The M.I.K.A. persona, the Layla Network brand, and the bundled artwork are NOT l
                     settings subtitle (the v2.7.88 fixed bottom-right chip blocked > BACK_TO_SWIPE).
                     Still mounts inside the settings screen's conditional render so it unmounts with it;
                     visible on every settings tab since it sits above the tab nav in the header flow. */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '-22px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', marginTop: '-22px', marginBottom: '24px' }}>
                     <CreditsBadge onOpen={() => setIsCreditsOpen(true)} />
+                    <MikaBadge onOpen={() => setIsProjectMikaOpen(true)} />
                 </div>
 
                 <div style={{ width: '100%', maxWidth: '400px', textAlign: 'left' }}>
@@ -37427,6 +37434,68 @@ Output STRICTLY in XML format:
                 </div>
             )}
 
+            {/* ✨ MIKA'S PURR ENGINE LAUNCH AD (v2.7.92) ✨ — first-run chain position #6:
+                fires ONCE per install after the PREFIX_CACHE ad (the chain gates guarantee
+                it). Amber #FF9100 = the MIKA/alert lane — a voice engine wears the voice
+                lane. Hero is the PawIcon brand glyph (Iconography law: no new emoji-as-
+                UI-icon). The meta-joke is load-bearing: self-aware ad == the pitch. */}
+            {hasSeenMeowAd && hasSeenSysCtrlAd && hasSeenCardSyncAd && hasSeenV28Ad && hasSeenPrefixCacheAd && !hasSeenPurrAd && !isBooting && !isAutoResuming && !isTutorialActive && !dbMigrationState && (
+                <div className="modal-overlay" style={{ zIndex: 100000, background: 'rgba(5, 3, 8, 0.85)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', inset: 0 }}>
+                    <div style={{ border: '2px solid #FF9100', boxShadow: '0 0 40px rgba(255, 145, 0, 0.6), inset 0 0 20px rgba(255, 145, 0, 0.2)', background: '#0a0f14', padding: '0', maxWidth: '340px', width: '90%', borderRadius: '0', textAlign: 'center', animation: 'crtFlicker 0.2s ease-out, csd-rise 0.4s ease-out', position: 'relative', overflow: 'hidden' }}>
+
+                        <div style={{ background: '#FF9100', color: '#000', padding: '4px 8px', fontWeight: '900', display: 'flex', justifyContent: 'space-between', fontFamily: "monospace", fontSize: '12px', borderBottom: '2px solid #FF9100' }}>
+                            <span>{t('purr_ad_filename', '!! TOTALLY_NOT_AN_AD.EXE !!')}</span>
+                            <button
+                                onClick={() => {
+                                    setHasSeenPurrAd(true);
+                                    setSparkTokens(prev => prev + 15);
+                                    setTutorialRewardPopup({ amount: 15, isHubBonus: true });
+                                    setTimeout(() => handleSaveSession(true, false, false), 500);
+                                }}
+                                style={{ background: 'transparent', border: 'none', color: '#000', cursor: 'pointer', fontWeight: '900' }}
+                            >
+                                X
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '24px 20px', background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 145, 0, 0.05) 2px, rgba(255, 145, 0, 0.05) 4px)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                                <span style={{ display: 'flex', color: '#FF9100', filter: 'drop-shadow(0 0 10px rgba(255,145,0,0.6))', animation: 'csd-pulse 0.5s infinite' }}><PawIcon size={40} /></span>
+                            </div>
+                            <h2 style={{ margin: '0 0 16px 0', color: '#FF9100', fontFamily: "monospace", textShadow: '0 0 10px #FF9100', letterSpacing: '0.05em', animation: 'glitchText 2s infinite' }}>{t('purr_ad_headline', 'PURR ENGINE IS LIVE!')}</h2>
+                            <p style={{ color: '#fff', fontFamily: "monospace", fontSize: '12px', lineHeight: 1.6, marginBottom: '12px', fontWeight: 'bold' }}>
+                                {t('purr_ad_p1', 'Yes. This is an ad. I live in this app, somebody handed a catgirl a userbase, and my human just shipped something worth breaking the fourth wall for.')}
+                            </p>
+                            <p style={{ color: '#fff', fontFamily: "monospace", fontSize: '12px', lineHeight: 1.6, marginBottom: '12px', fontWeight: 'bold' }}>
+                                {t('purr_ad_p2', 'ProjectMIKA is our open-source workshop — and its newest release is the PURR Engine: the neural voice engine born inside GachaSwipe, now a standalone, system-wide Android TTS app!')}
+                            </p>
+                            <p style={{ color: '#fff', fontFamily: "monospace", fontSize: '12px', lineHeight: 1.6, marginBottom: '24px', fontWeight: 'bold' }}>
+                                {t('purr_ad_p3', 'Kokoro-82M neural voices, voice cloning, MIKASTOP dramatic pauses, audiobook export — 100% local on your phone. Zero cloud. Zero subscriptions. Pure open source. *purrs in offline*')}
+                            </p>
+
+                            <a href={PURR_ENGINE_URL} target="_blank" rel="noreferrer" style={{ display: 'block', marginBottom: '10px', padding: '10px', background: 'rgba(255, 145, 0, 0.08)', color: '#FF9100', border: '2px solid #FF9100', fontWeight: '900', fontSize: '13px', fontFamily: "monospace", cursor: 'pointer', textDecoration: 'none', letterSpacing: '0.05em', textShadow: '0 0 8px rgba(255,145,0,0.5)' }}>
+                                {t('purr_ad_visit_btn', '▶ VISIT_THE_LAIR')}
+                            </a>
+
+                            <button
+                                onClick={() => {
+                                    setHasSeenPurrAd(true);
+                                    setSparkTokens(prev => prev + 15);
+                                    setTutorialRewardPopup({ amount: 15, isHubBonus: true });
+                                    setTimeout(() => handleSaveSession(true, false, false), 500);
+                                }}
+                                style={{ width: '100%', padding: '12px', background: '#FF9100', color: '#000', border: '2px solid #fff', fontWeight: '900', fontSize: '14px', fontFamily: "monospace", cursor: 'pointer', boxShadow: '4px 4px 0px rgba(255,255,255,0.5)', transition: 'all 0.1s' }}
+                                onMouseDown={e => { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '2px 2px 0px rgba(255,255,255,0.5)'; }}
+                                onMouseUp={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '4px 4px 0px rgba(255,255,255,0.5)'; }}
+                            >
+                                {t('purr_ad_claim_btn', '> ACKNOWLEDGE & CLAIM SPARKS <')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             {/* ✨ MIKA'S GLOBAL NAVIGATION LOADING OVERLAY ✨ */}
             {hubNavigationLoading && (
                 <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(5, 3, 8, 0.95)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', animation: 'fadeIn 0.2s ease', transition: 'opacity 0.4s ease' }}>
@@ -40683,6 +40752,11 @@ ${degenMode && !isSprite ? "5. DEGENERATE OVERRIDE: Inject unhinged, cursed, or 
             {/* ✨ MIKA'S CREDITS REGISTRY MODAL (v2.7.88) — mounted only while open ✨ */}
             {isCreditsOpen && (
                 <CreditsModal onClose={() => setIsCreditsOpen(false)} />
+            )}
+
+            {/* ✨ MIKA'S PROJECT M.I.K.A. MODAL (v2.7.92) — mounted only while open ✨ */}
+            {isProjectMikaOpen && (
+                <ProjectMikaModal onClose={() => setIsProjectMikaOpen(false)} />
             )}
 
             {/* ✨ MIKA'S LUCIDITY DIAGNOSTIC & TELEMETRY MODAL ✨ */}

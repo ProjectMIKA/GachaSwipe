@@ -1,6 +1,11 @@
 import React from 'react';
 
 export const HeartIcon = ({ size = 26 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-10-9.2C.5 8.3 2 4.8 5.3 4.5 7.3 4.3 8.9 5.4 12 8c3.1-2.6 4.7-3.7 6.7-3.5C22 4.8 23.5 8.3 22 11.8 19.5 16.4 12 21 12 21z"/></svg>;
+// ✨ MIKA'S PAWPRINT (ProjectMIKA brand glyph, v2.7.92) ✨ — solid cat paw: one pad,
+// four beans. Identity glyph for the studio chrome (MikaBadge / ProjectMikaModal /
+// PURR launch ad) — never cosplays as the Spark bolt. Inherits lane color from the
+// parent via currentColor.
+export const PawIcon = ({ size = 26 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" style={{ display: 'block', flexShrink: 0 }}><ellipse cx="12" cy="16.2" rx="5.4" ry="4.4"/><circle cx="5.1" cy="9.6" r="2.15"/><circle cx="9.35" cy="6.9" r="2.3"/><circle cx="14.65" cy="6.9" r="2.3"/><circle cx="18.9" cy="9.6" r="2.15"/></svg>;
 export const XIcon = ({ size = 26 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={size <= 16 ? 2.5 : 3} strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>;
 export const RewindIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M3 4v6h6"/><path d="M3.5 10a9 9 0 1 1-1.6 5"/></svg>;
 export const InfoIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 15l6-6 6 6"/></svg>;
