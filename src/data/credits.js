@@ -24,6 +24,17 @@ export const CREDITS_CONTRIBUTORS = [
                 detail: 'Clean-room RisuAI (.risup/.risum), CharX & SillyTavern preset interop (PR #5)'
             }
         ]
+    },
+    {
+        name: 'TanmayNileshShinde',
+        handle: '@TanmayNileshShinde',
+        url: 'https://github.com/TanmayNileshShinde',
+        contributions: [
+            {
+                label: 'SENTIMENT ENGINE TEST SUITE',
+                detail: '21 zero-dep node:test coverage tests for the Neural Sentiment Engine (PR #4)'
+            }
+        ]
     }
 ];
 

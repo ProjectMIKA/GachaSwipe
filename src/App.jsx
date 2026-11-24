@@ -748,7 +748,7 @@ const SPRITE_BG_TOKENS = {
 };
 
 // ✨ MIKA'S TUTORIAL SYSTEM ✨
-const TUTORIAL_VERSION = 5.2; // ✨ THE CREDIT ROLL — CREDITS_REGISTRY badge + ROM-09 PRESET ENGINE (bump = the update auto-open law)
+const TUTORIAL_VERSION = 5.3; // ✨ THE EMPATHY BATTERY — PR #4 test suite + Tanmay credits row (bump = the update auto-open law)
 
 // ✨ MIKA'S TUTORIAL STEP DATABASE ✨
 
