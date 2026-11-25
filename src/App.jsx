@@ -5442,7 +5442,7 @@ Output strictly inside these XML tags:
             selectedEngine, selectedImageModel, perchanceConfig, autoResume, autoSaveSwipes, selectedChara,
             recentNames, genderPrefs, msgThirst, queue, useLaylaPersona, customUserProfile,
             hasSeenTutorial, seenTutorialVersion, dismissedUpdateVersion, hasCollectedFirstTutorialSpark, collectedTutorialRewards, ssrPityCount, enableAtmosphere, showFullHistory, appLanguage, pauseBetweenSwipes,
-            hasSeenLateNightWarning, sparkTokens, sessionHistory, themes, inbox, hasSeenHubAd, hasSeenMeowAd, hasSeenSysCtrlAd, hasSeenCardSyncAd, hasSeenV28Ad, hasSeenPrefixCacheAd, hasConfiguredPhoneScrubber, hasConfiguredGenderScrubber, achievements, lastDailyCheckin,
+            hasSeenLateNightWarning, sparkTokens, sessionHistory, themes, inbox, hasSeenHubAd, hasSeenMeowAd, hasSeenSysCtrlAd, hasSeenCardSyncAd, hasSeenV28Ad, hasSeenPrefixCacheAd, hasSeenPurrAd, hasConfiguredPhoneScrubber, hasConfiguredGenderScrubber, achievements, lastDailyCheckin,
             chatContextLimit, groupChatContextLimit, enablePrefixCache, enableOobMemory, oobPhotoTags, enableOobDirector, enableSessionCompaction, chatProfileDetail, groupProfileDetail, chatSeedMode, tokenPreset, chatStyleMode, groupChatStyleMode, rpNarrationPerson, actionTextColor, proactiveOffline, proactiveIdle, proactiveFavoritesOnly, enableMeowEngine, enableSelfieAutonomy, enableProactiveSelfies, groupChatFlow, groupChatPause, groupQueuePrefs, neuralLinkMode, mediaChunkSize, autoUpdateLaylaCards, customPresets, activePresetId, slottedCartridges, arcadeModules, enableMp3Compression,
             imagePrefix, deepPromptPrefs, imagePromptStylePrefs, customOobPromptInstructions, pinnedChatBgs, bannedTags, activeChatId, isBuddyOpen, isDesktopLayout, isBuddyTyping, syncSpeed, buddyInput, hasSeenDevPreset,
             enableImageCensor, useLocalDreamPrefix, cinematicChatBg, enableSystemDirectives, systemDirectives,
@@ -7016,6 +7016,7 @@ Output strictly inside these XML tags:
                     hasSeenCardSyncAd: state.hasSeenCardSyncAd,
                     hasSeenV28Ad: state.hasSeenV28Ad,
                     hasSeenPrefixCacheAd: state.hasSeenPrefixCacheAd,
+                    hasSeenPurrAd: state.hasSeenPurrAd,
                     achievements: state.achievements,
                     lastDailyCheckin: state.lastDailyCheckin,
                     hubCheckinStreak: state.hubCheckinStreak, // ✨ MIKA'S HUB DAILY RITUAL ✨
