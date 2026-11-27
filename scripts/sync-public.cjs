@@ -29,7 +29,7 @@ const PUBLIC_BRANCH = 'main';
 const SYNC_BRANCH = 'public-sync';
 // Internal-only paths + the private-side release archive: these must NEVER
 // appear in the public tree (the public changelog is the Releases page).
-// Keep this list in sync with .clinerules/02-build-and-release.md.
+// Keep this list in sync with the `release` skill (public-mirror section).
 const EXCLUDED_PATHS = ['.agents', '.clinerules', 'HANDOFF.md', 'SDK', 'RELEASE_NOTES.md'];
 // ───────────────────────────────────────────────────────────────────────────
 

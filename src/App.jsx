@@ -32,8 +32,9 @@ import { sanitizeSearchQuery, validatePulseCreatorPayload, samplePulseChassis, b
 import { getEffectiveSentiment, detectSentimentEngine } from './utils/sentimentEngine.js';
 import { MemoryRouter } from './utils/MemoryRouter.js';
 import { SCHEMAS } from './db/schema.js';
-import { checkDatabaseHealth, repairDatabaseQuick, salvageAndRebuildDatabase } from './db/dbRecovery.js';
+import { checkDatabaseHealth, repairDatabaseQuick, salvageAndRebuildDatabase, safeExecuteSql } from './db/dbRecovery.js';
 import { withRetry } from './utils/bootRetry.js';
+import { isBridgeDeadError, describeSaveError } from './utils/dbBridge.js';
 import { recordLlmTelemetry, recordUserCadence, getActiveCadenceConfig, purgeCadenceTelemetry, getModelCadenceProfile, getPrefillEstimate, estimateCacheHit, calculateGroupTurnCadence, getEffectiveNeuralLinkTier, getKnownLocalEngine, getGovernorTier, flushTelemetryStore } from './utils/neuralCadenceEngine.js';
 import { wrapLaylaSdkWithActivityGovernor, configureActivityGovernor, resetActivityGovernor, isLlmStreamFrozen, hasImageGenSinceLastLlmTurn, beginThoughtFreeze, endThoughtFreeze, beginMenuFreeze, endMenuFreeze, beginProfileFreeze, endProfileFreeze, setImagePromptingResolver, setCompletionPresetMiddleware } from './utils/llmActivityGovernor.js';
 import { PresetCtrlUI, registerPresetSdkRef, ensurePresetStoreHydrated, setPresetHookEnabled, createPresetEngineMiddleware } from './modules/PresetCtrl/index.js';
@@ -750,7 +751,7 @@ const SPRITE_BG_TOKENS = {
 };
 
 // ✨ MIKA'S TUTORIAL SYSTEM ✨
-const TUTORIAL_VERSION = 5.4; // ✨ THE OPEN MIC — PURR Engine launch + PROJECT_MIKA studio chrome (bump = the update auto-open law)
+const TUTORIAL_VERSION = 5.5; // ✨ THE VITAL SIGNS — DB write armor + honest DATA_MANAGEMENT errors + awake boot gate (bump = the update auto-open law)
 
 // ✨ MIKA'S TUTORIAL STEP DATABASE ✨
 
@@ -6662,6 +6663,17 @@ Output strictly inside these XML tags:
         } catch (e) { console.error("[M.I.K.A SQL] DB Init Failed:", e); return false; }
     };
 
+    // ✨ MIKA'S VITAL SIGNS ARMOR (v2.7.94) ✨
+    // WHY: the Boot Doctor retries the boot probe, but mid-session the host's NativeDatabase
+    // bridge can STILL die under the running app (r/layla_ai bug: v2.7.93 on Layla
+    // v7.8.0-direct — every save_session NPE'd). Saves ran raw executeSql with zero retry:
+    // one transient bounce = "Database write failed" with no second chance. This executor
+    // wraps EVERY save-path query in safeExecuteSql (timeout guard — no UI-hanging bridge
+    // locks) + a short withRetry backoff: a rebooting bridge gets a retry, a dead one fails
+    // loud through describeSaveError's recovery hint. 🐾
+    const dbExecArmored = async (query, params = [], { attempts = 2, delayMs = 600, timeoutMs = 30000 } = {}) =>
+        withRetry(() => safeExecuteSql(layla, query, params, timeoutMs), { attempts, delays: [delayMs] });
+
 
 
     // ✨ MIKA'S INTERACTIVE SQLITE MIGRATION ENGINE ✨
@@ -6946,7 +6958,8 @@ Output strictly inside these XML tags:
 
         try {
             const state = stateRef.current;
-            await initDatabase();
+            const dbInitOk = await initDatabase();
+            if (!dbInitOk) throw new Error('Layla Database bridge unavailable — init probe failed');
 
             const targetIds = Array.isArray(targetChatId)
                 ? targetChatId
@@ -6957,7 +6970,7 @@ Output strictly inside these XML tags:
             if (!isIsolatedChatSave) {
                 // 1. Save Themes
                 setActiveSaveTask('themes_data');
-                await layla.db.executeSql("INSERT OR REPLACE INTO app_state (key, val) VALUES ('themes_data', ?)", [JSON.stringify(state.themes || {})]);
+                await dbExecArmored("INSERT OR REPLACE INTO app_state (key, val) VALUES ('themes_data', ?)", [JSON.stringify(state.themes || {})]);
 
                 // 2. Save Cleaned History
                 setActiveSaveTask('history_data');
@@ -6967,11 +6980,11 @@ Output strictly inside these XML tags:
                 });
                 const historyClone = JSON.parse(JSON.stringify(cleanHistory));
                 await extractAndSaveMedia(historyClone, 'history');
-                await layla.db.executeSql("INSERT OR REPLACE INTO app_state (key, val) VALUES ('history_data', ?)", [JSON.stringify(historyClone || [])]);
+                await dbExecArmored("INSERT OR REPLACE INTO app_state (key, val) VALUES ('history_data', ?)", [JSON.stringify(historyClone || [])]);
 
                 // 3. Save Tape Archive
                 setActiveSaveTask('archive_data');
-                await layla.db.executeSql("INSERT OR REPLACE INTO app_state (key, val) VALUES ('tape_archive', ?)", [JSON.stringify(state.tapeArchive || [])]);
+                await dbExecArmored("INSERT OR REPLACE INTO app_state (key, val) VALUES ('tape_archive', ?)", [JSON.stringify(state.tapeArchive || [])]);
 
                 // 4. Save Core Index / Settings
                 setActiveSaveTask('index_data');
@@ -7027,7 +7040,7 @@ Output strictly inside these XML tags:
                     mediaChunkSize: state.mediaChunkSize,
                     tapeArchive: state.tapeArchive // ✨ MIKA'S FIX: Tell the Database it exists!
                 };
-                await layla.db.executeSql("INSERT OR REPLACE INTO app_state (key, val) VALUES ('index_data', ?)", [JSON.stringify(indexData)]);
+                await dbExecArmored("INSERT OR REPLACE INTO app_state (key, val) VALUES ('index_data', ?)", [JSON.stringify(indexData)]);
             }
 
             // 5. Save Inbox Chats
@@ -7057,7 +7070,7 @@ Output strictly inside these XML tags:
                             const status = chatClone.status || 'pending';
                             const isFav = chatClone.isFavorite ? 1 : 0;
                             const aff = chatClone.affection || 0;
-                            await layla.db.executeSql(
+                            await dbExecArmored(
                                 "INSERT OR REPLACE INTO chats (id, status, is_favorite, affection, data, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                                 [tid, status, isFav, aff, JSON.stringify(chatClone), Date.now()]
                             );
@@ -7080,7 +7093,7 @@ Output strictly inside these XML tags:
                         const status = chatClone.status || 'pending';
                         const isFav = chatClone.isFavorite ? 1 : 0;
                         const aff = chatClone.affection || 0;
-                        await layla.db.executeSql(
+                        await dbExecArmored(
                             "INSERT OR REPLACE INTO chats (id, status, is_favorite, affection, data, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
                             [id, status, isFav, aff, JSON.stringify(chatClone), Date.now()]
                         );
@@ -7088,7 +7101,7 @@ Output strictly inside these XML tags:
 
                     // ✨ MIKA'S SQLITE RECONCILER: Purge any orphaned chats in DB that aren't in state.inbox!
                     try {
-                        const existingDbIdsRes = await layla.db.executeSql("SELECT id FROM chats", []);
+                        const existingDbIdsRes = await dbExecArmored("SELECT id FROM chats", []);
                         if (existingDbIdsRes?.rows?.length > 0 && chatIds.length > 0) {
                             const activeIdSet = new Set(chatIds);
                             for (const row of existingDbIdsRes.rows) {
@@ -7098,7 +7111,7 @@ Output strictly inside these XML tags:
                                     if (window.mikaVerifiedLaylaIds && window.mikaVerifiedLaylaIds.has(row.id)) {
                                         continue;
                                     }
-                                    await layla.db.executeSql("DELETE FROM chats WHERE id = ?", [row.id]);
+                                    await dbExecArmored("DELETE FROM chats WHERE id = ?", [row.id]);
                                     await deleteChatMedia(row.id);
                                 }
                             }
@@ -7114,7 +7127,8 @@ Output strictly inside these XML tags:
         } catch (e) {
             consecutiveSaveFailuresRef.current += 1;
             console.error("[M.I.K.A SQL] Save error:", e);
-            if (!silent) showAlert("Save Error", "Database write failed: " + e.message);
+            if (isBridgeDeadError(e)) console.error("[M.I.K.A SQL] DB bridge looks DEAD or rebooting — host NativeDatabase rejected the write. Suggest: fully close Layla, reopen (boot probe re-arms the bridge), then retry / Database Doctor.");
+            if (!silent) showAlert("Save Error", "Database write failed: " + describeSaveError(e));
         } finally {
             // ✨ MIKA'S FIX: No more artificial timers! SQLite is instantly fast!
             isSavingRef.current = false;
@@ -7900,7 +7914,12 @@ Output strictly inside these XML tags:
             // install (the phantom-first-boot bug). 🐾
             try {
                 await withRetry(async () => {
-                    await initDatabase();
+                    // ✨ MIKA'S VITAL SIGNS (v2.7.94) ✨ — initDatabase swallows its own errors and
+                    // returns false; feeding that verdict straight into withRetry ended the probe
+                    // loop SILENTLY (no throw = no retry = the gate could pass on a dead bridge).
+                    // Convert it to a throw so the 1s/2s/4s backoff actually backs off. 🐾
+                    const dbOk = await initDatabase();
+                    if (!dbOk) throw new Error('host database did not answer the init probe (bridge absent or rejecting calls)');
                     await MemoryRouter.initialize(layla);
                 }, { attempts: 4, onRetry: (n) => setBootStatusText(`Database warming up... (probe ${n}/4) 🐾`) });
             } catch (dbErr) {
@@ -20376,6 +20395,13 @@ Output STRICT JSON only, no markdown fences, no preamble: [{"creator":"ExactName
         try {
             let zip = new window.JSZip();
 
+            // ✨ MIKA'S VITAL SIGNS PROBE (v2.7.94) ✨ — a dead host DB bridge used to
+            // detonate mid-pack behind the generic catch-all (r/layla_ai bug: v2.7.93 on
+            // Layla v7.8.0-direct). Probe BEFORE packing so the failure is loud, honest,
+            // and diagnosable instead of a mystery meatball. 🐾
+            setBackupTerminal(prev => ({ ...prev, step: 'CHECKING_DATABASE_VITALS...', progress: 5 }));
+            await dbExecArmored('SELECT 1', [], { attempts: 2, delayMs: 800 });
+
             // ✨ MIKA'S SQLITE EXPORT BRIDGE ✨
             const getSqlData = async (key) => {
                 const res = await layla.db.executeSql("SELECT val FROM app_state WHERE key = ?", [key]);
@@ -20470,7 +20496,9 @@ Output STRICT JSON only, no markdown fences, no preamble: [{"creator":"ExactName
         } catch (e) {
             console.error("Zip Backup failed", e);
             setBackupTerminal(null);
-            showAlert("Backup Error", "My circuits overloaded! Nyaa!");
+            // ✨ v2.7.94 VITAL SIGNS: the real diagnosis rides WITH the flavor line now —
+            // a swallowed NPE made the DATA_MANAGEMENT export look unfixable. 🐾
+            showAlert("Backup Error", "My circuits overloaded! " + describeSaveError(e));
         }
     };
 
